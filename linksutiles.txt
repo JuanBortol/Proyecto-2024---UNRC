@@ -1,0 +1,2 @@
+https://www.ncbi.nlm.nih.gov/genbank/  -- Banco de genes( de acá tenemos que descargar las secuencias de proteinas)
+
