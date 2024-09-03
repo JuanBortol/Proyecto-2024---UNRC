@@ -1,0 +1,11 @@
+
+/// Crear y activar entorno virtual
+python3 -m venv venv
+source venv/bin/activate
+
+/// Instalar dependencias de Python
+pip install -r requirements.txt
+
+///Instalar dependencias de Node.js
+
+npm install
