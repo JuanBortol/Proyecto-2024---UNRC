@@ -1,0 +1,2 @@
+Evaluar la capacidad de los clasificadores para predecir la función de proteínas basándose únicamente en sus secuencias de aminoácidos para seleccionar aquellas con la capacidad de inhibir toxinas especificas en funcion de otras propiedades. 
+
