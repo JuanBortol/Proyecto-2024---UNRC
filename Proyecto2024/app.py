@@ -1,21 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from modelo import Usuario  # Asegúrate de tener el archivo modelo.py con el modelo definido
-
-# Configuración de la base de datos
-DATABASE_URL = 'sqlite:///usuarios.db'
-
-engine = create_engine(DATABASE_URL, echo=True)
-Base = declarative_base()
-Session = sessionmaker(bind=engine)
-
-# Crear una sesión
-db_session = Session()
+from werkzeug.utils import secure_filename
+import os
+from database import db_session, Base, engine  # Importar db_session y Base desde database.py
+from usuario import Usuario
+from reporte import Reporte
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Necesario para usar flash messages
+
+# Crear las tablas si no existen
+Base.metadata.create_all(engine)
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -75,16 +69,41 @@ def home():
         flash('Debes iniciar sesión para acceder a esta página.')
         return redirect(url_for('login'))
 
-@app.route("/reportPage", methods=['GET','POST'])
+@app.route("/reportPage", methods=['GET', 'POST'])
 def reportPage():
-    if'username' in session:
+    if 'username' in session:
+        if request.method == 'POST':
+            # Obtener los datos del formulario
+            incorrect_protein = request.form['incorrectProtein']
+            reason = request.form['reason']
+            username = session['username']
+
+            # Verificar si los datos se están recibiendo correctamente
+            print(f"Proteína incorrecta: {incorrect_protein}")
+            print(f"Motivo: {reason}")
+            print(f"Usuario: {username}")
+
+            # Procesar archivo PDF (si es subido)
+            pdf = request.files.get('pdfUpload')
+            if pdf:
+                filename = secure_filename(pdf.filename)
+                pdf_path = os.path.join('uploads', filename)
+                pdf.save(pdf_path)
+                print(f"PDF guardado en: {pdf_path}")
+
+            # Crear el nuevo reporte
+            nuevo_reporte = Reporte(proteina=incorrect_protein, razon=reason, usuario=username)
+            # Guardar el reporte en la base de datos
+            db_session.add(nuevo_reporte)
+            db_session.commit()
+
+            flash('Reporte enviado con éxito.')
+            return redirect(url_for('reportPage'))  # Redirigir tras el envío
+
         return render_template('report.html', username=session['username'])
     else:
-        flash('Debes iniciar session para acceder a esta pagina.')
+        flash('Debes iniciar sesión para acceder a esta página.')
         return redirect(url_for('login'))
 
-
 if __name__ == "__main__":
-    # Crear tablas si no existen
-    Base.metadata.create_all(engine)
     app.run(debug=True)
