@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 from database import db_session, Base, engine  # Importar db_session y Base desde database.py
@@ -6,6 +7,7 @@ from usuario import Usuario
 from reporte import Reporte
 
 app = Flask(__name__)
+CORS(app) # Para fixear lo de error por puertos distintos
 app.secret_key = 'your_secret_key'  # Necesario para usar flash messages
 
 # Crear las tablas si no existen
@@ -38,36 +40,24 @@ def register():
 
     return render_template('register.html')
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/login", methods=['POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
 
-        # Validación de credenciales
-        user = db_session.query(Usuario).filter_by(nombre=username, contraseña=password).first()
-        if not user:
-            flash('Usuario o contraseña incorrectos')
-        else:
-            session['username'] = username
-            flash(f'Bienvenido, {username}!')
-            return redirect(url_for('home'))
+    user = db_session.query(Usuario).filter_by(nombre=username, contraseña=password).first()
+    if not user:
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 400
 
-    return render_template('login.html')
+    session['username'] = username
+    return jsonify({'message': f'Bienvenido, {username}!'}), 200
 
-@app.route("/logout")
+@app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('username', None)
-    flash('Has cerrado sesión')
-    return redirect(url_for('home'))
+    session.clear()
+    return jsonify({'message': 'Logged out successfully'}), 200
 
-@app.route("/home", methods=['GET', 'POST'])
-def home():
-    if 'username' in session:
-        return render_template('home.html', username=session['username'])
-    else:
-        flash('Debes iniciar sesión para acceder a esta página.')
-        return redirect(url_for('login'))
 
 @app.route("/reportPage", methods=['GET', 'POST'])
 def reportPage():
