@@ -1,9 +1,8 @@
-import './styles/App.css';
-import NotLoggedIn from './pages/NotLoggedIn'; 
+import LoggedIn from './pages/LoggedIn';
 
 function App() {
   return (
-    <NotLoggedIn></NotLoggedIn>
+    <LoggedIn/>
   );
 }
 
