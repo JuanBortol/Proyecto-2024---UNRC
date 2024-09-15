@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DarkModeButton from '../components/DarkModeButton';
 import LoginForm from '../components/LoginForm';
 import styles from '../styles/NotLoggedIn.module.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function NotLoggedIn() {
   const [showLoginForm, setShowLoginForm] = useState(false); // Toggle login form
@@ -9,6 +10,14 @@ export default function NotLoggedIn() {
   const handleLoginClick = () => {
     setShowLoginForm(true);
   };
+  const navigate = useNavigate();
+ 
+  useEffect(() => {
+    const username = sessionStorage.getItem('username');
+    if (username) {
+      navigate('/home');
+    }
+  }, [navigate]);
 
   return (
     <div className={`flex items-center justify-center min-h-screen ${styles.bgGradient}`}>

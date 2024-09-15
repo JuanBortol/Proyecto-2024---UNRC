@@ -3,7 +3,7 @@ import NotLoggedIn from './pages/NotLoggedIn';
 import LoggedIn from './pages/LoggedIn';
 import Logout from './components/Logout';
 
-function App() {
+function AppRouter() {
   return (
     <Router>
       <Routes>
@@ -15,4 +15,4 @@ function App() {
   );
 }
 
-export default App;
+export default AppRouter;

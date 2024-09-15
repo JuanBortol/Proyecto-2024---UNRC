@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DarkModeButton from './DarkModeButton';
-DarkModeButton
+import httpClient from '../httpClient';
 
 export default function LoginForm() {
   const [username, setUsername] = useState('');
@@ -11,24 +11,23 @@ export default function LoginForm() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    const response = await fetch('http://localhost:5000/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
+  
+    try {
+      const response = await httpClient.post('http://localhost:5000/login', {
+        username,
+        password,
+      });
       sessionStorage.setItem('username', username);
       navigate('/home');
-    } else {
-      setError(data.message);
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setError(error.response.data.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
+  
 
   return (
     <div className="flex items-center justify-center flex-col">

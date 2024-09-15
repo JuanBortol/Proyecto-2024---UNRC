@@ -1,3 +1,4 @@
+from datetime import timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -5,13 +6,102 @@ import os
 from database import db_session, Base, engine  # Importar db_session y Base desde database.py
 from usuario import Usuario
 from reporte import Reporte
+from prediction import Prediction
+import secrets
+
 
 app = Flask(__name__)
-CORS(app) # Para fixear lo de error por puertos distintos
-app.secret_key = 'your_secret_key'  # Necesario para usar flash messages
+CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
+app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
 
 # Crear las tablas si no existen
 Base.metadata.create_all(engine)
+
+# Set the upload folder
+UPLOAD_FOLDER = 'uploads/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Create the folder if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'username' not in session:
+        return 'User not logged in', 401  # Ensure the user is logged in
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    file_type = request.form.get('type')
+
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file:
+        filename = secure_filename(file.filename)
+        # Store filename in session
+        session[f'{file_type}_filename'] = filename
+        return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 200
+
+@app.route('/submit', methods=['POST'])
+def submit_files():
+    if 'username' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    username = session['username']
+    user = db_session.query(Usuario).filter_by(nombre=username).first()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    chain_filename = session.get('chain_filename')
+    model_filename = session.get('model_filename')
+    result = 'placeholder'
+
+    if not chain_filename or not model_filename:
+        return jsonify({'error': 'Both files must be uploaded'}), 400
+
+    # Retrieve files from the request
+    chain_file = request.files.get('chain_file')
+    model_file = request.files.get('model_file')
+
+    if not chain_file or not model_file:
+        return jsonify({'error': 'Files are missing'}), 400
+
+    try:
+        # Save the files
+        chain_filepath = os.path.join(app.config['UPLOAD_FOLDER'], chain_filename)
+        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
+        chain_file.save(chain_filepath)
+        model_file.save(model_filepath)
+
+        # Save prediction information to the database
+        prediction = Prediction(
+            user_id=user.id,
+            chain_filename=chain_filename,
+            model_filename=model_filename,
+            result=result
+        )
+        db_session.add(prediction)
+        db_session.commit()
+
+        # Clear filenames from session after submission
+        session.pop('cadena_filename', None)
+        session.pop('modelo_filename', None)
+
+        return jsonify({'message': 'Files submitted and saved successfully'}), 200
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/test_login', methods=['GET'])
+def test_login():
+    if 'username' in session:
+        return jsonify({'message': 'User is logged in', 'username': session['username']}), 200
+    else:
+        return jsonify({'error': 'No user logged in'}), 401
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():

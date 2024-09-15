@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import httpClient from '../httpClient';
 
 export default function Logout() {
   const navigate = useNavigate();
@@ -7,16 +8,13 @@ export default function Logout() {
   useEffect(() => {
     const handleLogout = async () => {
       try {
-        await fetch('http://localhost:5000/logout', {
-          method: 'POST',
-        });
-        sessionStorage.clear();
+        await httpClient.post('http://localhost:5000/logout', {});
+        sessionStorage.removeItem('username')
         navigate('/');
       } catch (error) {
         console.error('Logout failed:', error);
       }
     };
-
     handleLogout();
   }, [navigate]);
 }
