@@ -203,5 +203,26 @@ def reportPage():
         flash('Debes iniciar sesión para acceder a esta página.')
         return redirect(url_for('login'))
 
+@app.route('/predictions', methods=['GET'])
+def get_user_predictions():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    predictions = db_session.query(Prediction).filter_by(user_id=user_id).all()
+
+    predictions_data = [
+        {
+            'date': prediction.date.strftime('%d/%m/%y'),
+            'chain_filename': prediction.chain_filename,
+            'model_filename': prediction.model_filename,
+            'result': prediction.result
+        }
+        for prediction in predictions
+    ]
+
+    return jsonify(predictions_data), 200
+
 if __name__ == "__main__":
     app.run(debug=True)

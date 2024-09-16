@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NotLoggedIn from './pages/NotLoggedIn';
 import LoggedIn from './pages/LoggedIn';
 import Logout from './components/Logout';
+import History from './pages/History'
 import PrivateRoute from './components/PrivateRoute';
 
 function AppRouter() {

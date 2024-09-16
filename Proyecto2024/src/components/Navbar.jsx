@@ -6,9 +6,9 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    navigate('/logout');
-  }
+  const handleHome = () => {navigate('/home')}
+  const handleLogout = () => {navigate('/logout');}
+  const handleHistory = () => {navigate('/history');}
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -17,12 +17,15 @@ const Navbar = () => {
   return (
     <nav className="bg-transparent fixed top-0 w-full">
       <div className="container text-white mx-auto flex justify-between items-center p-2">
-        <div className="text-white text-4xl font-bold">PROTEINA</div>
+      <button className="text-white text-4xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
+      onClick={handleHome}>
+        PROTEINA
+      </button>
         
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-8 font-thin items-center">
-          <a href="#" className="text-sm">reportar</a>
-        <a href="#" className="text-sm">historial</a>
+          <a className="text-sm cursor-pointer">reportar</a>
+        <a className="text-sm cursor-pointer" onClick={handleHistory}>historial</a>
         <button className='bg-white rounded-full py-2 px-8 text-green-950 font-light' onClick={handleLogout}>
         logout
         </button>
