@@ -1,26 +1,30 @@
-import { useState, useEffect } from 'react';
-import DarkModeButton from '../components/DarkModeButton';
-import LoginForm from '../components/LoginForm';
-import styles from '../styles/NotLoggedIn.module.css';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import DarkModeButton from "../components/DarkModeButton";
+import LoginForm from "../components/LoginForm";
+import { AppContext } from "../components/AppContext";
 
 export default function NotLoggedIn() {
   const [showLoginForm, setShowLoginForm] = useState(false); // Toggle login form
+  const { isAuth, darkMode } = useContext(AppContext);
+  const navigate = useNavigate();
 
   const handleLoginClick = () => {
     setShowLoginForm(true);
   };
-  const navigate = useNavigate();
- 
+
   useEffect(() => {
-    const username = sessionStorage.getItem('username');
-    if (username) {
-      navigate('/home');
+    if (isAuth) {
+      navigate("/home");
     }
-  }, [navigate]);
+  }, [isAuth, navigate]);
 
   return (
-    <div className={`flex items-center justify-center min-h-screen ${styles.bgGradient}`}>
+    <div
+      className={`flex items-center justify-center min-h-screen ${
+        darkMode ? "bg-black" : "bg-gradient-to-b from-[#005F32] to-[#1B3127]"
+      }`}
+    >
       {showLoginForm ? (
         <LoginForm />
       ) : (

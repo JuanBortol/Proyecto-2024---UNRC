@@ -1,20 +1,32 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import httpClient from '../httpClient';
+import httpClient from '../utils/httpClient';
+import { AppContext } from './AppContext';
+import Loading from '../components/Loading';
 
 export default function Logout() {
   const navigate = useNavigate();
+  const { isAuth, setIsAuth } = useContext(AppContext);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const handleLogout = async () => {
-      try {
-        await httpClient.post('http://localhost:5000/logout', {});
-        sessionStorage.removeItem('username')
-        navigate('/');
-      } catch (error) {
-        console.error('Logout failed:', error);
-      }
-    };
-    handleLogout();
-  }, [navigate]);
+    if (isAuth) {
+      httpClient.post('http://localhost:5000/logout')
+        .then(res => {
+          localStorage.removeItem('username');
+          setIsAuth(false);
+          navigate('/');
+        })
+        .catch((e) => {
+          console.error(e);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      navigate('/');
+    }
+  }, [isAuth, navigate, setIsAuth]);
+
+  if (loading) return <Loading />;
 }

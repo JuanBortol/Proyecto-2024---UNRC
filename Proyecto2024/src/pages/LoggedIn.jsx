@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../components/Navbar";
 import styles from '../styles/LoggedIn.module.css';
-import httpClient from '../httpClient';
+import httpClient from '../utils/httpClient';
+import { AppContext } from '../components/AppContext';
 
 export default function LoggedIn() {
   const navigate = useNavigate();
-  const username = sessionStorage.getItem('username');
+  const username = localStorage.getItem('username');
+  const { darkMode } = useContext(AppContext);
 
   // hidden file inputs
   const fileInputChainRef = useRef(null);
@@ -18,19 +20,11 @@ export default function LoggedIn() {
 
   const [chainButtonDisabled, setChainButtonDisabled] = useState(false);
   const [modelButtonDisabled, setModelButtonDisabled] = useState(false);
-
-  useEffect(() => {
-    if (!username) {
-      navigate('/');
-    }
-  }, [username, navigate]);
-
+  
   useEffect(() => {
     setChainButtonDisabled(!!chainFilename);
     setModelButtonDisabled(!!modelFilename);
   }, [chainFilename, modelFilename]);
-
-  if (!username) return null;
 
   const handleFileChainUpload = async (event) => {
     const file = event.target.files[0];
@@ -90,7 +84,7 @@ export default function LoggedIn() {
       const response = await httpClient.post('http://localhost:5000/submit', formData);
       if (response.status === 200) {
         console.log('Submission successful');
-        navigate('/');
+        navigate('/'); // To be changed
       } else {
         console.error('Submission failed');
       }
@@ -111,7 +105,7 @@ export default function LoggedIn() {
 
   return (
     <>
-      <div className={`${styles.bgGradient} flex items-center justify-center text-white min-h-screen space-y-16`}>
+      <div className={`flex items-center justify-center text-white min-h-screen space-y-16 ${darkMode ? "bg-black": styles.bgGradient}`}>
         <Navbar />
         <div className='container space-y-36'>
           <div className='top-text space-y-2'>
@@ -121,7 +115,9 @@ export default function LoggedIn() {
           <div className='buttons flex justify-around text-2xl font-light text-green-950 space-x-8'>
             {/* Chain button */}
             <button 
-              className={`w-full ${chainButtonDisabled ? 'bg-green-300 text-gray-800 cursor-not-allowed' : 'bg-white text-black'} rounded-full py-2 flex items-center justify-center`}
+              className={`w-full rounded-full py-2 flex items-center justify-center
+                ${chainButtonDisabled ? 'bg-gray-300 bg-opacity-50 text-gray-800 cursor-not-allowed' : 'bg-white text-black'}
+              `}
               onClick={handleChainButtonClick}
               disabled={chainButtonDisabled}
             >
@@ -137,7 +133,9 @@ export default function LoggedIn() {
             </button>
             {/* Model button */}
             <button 
-              className={`w-full ${modelButtonDisabled ? 'bg-green-400 bg-opacity-15 text-gray-300 cursor-not-allowed' : 'bg-transparent text-white hover:bg-white hover:text-green-950'} py-2 flex items-center justify-center rounded-full transition-colors duration-250`}
+              className={`w-full py-2 flex items-center justify-center rounded-full transition-colors duration-250
+              ${modelButtonDisabled ? 'bg-gray-300 bg-opacity-10 text-gray-300 cursor-not-allowed' : 'bg-transparent text-white hover:bg-white hover:text-green-950'}
+              `}
               onClick={handleModelButtonClick}
               disabled={modelButtonDisabled}
             >
@@ -165,7 +163,12 @@ export default function LoggedIn() {
               onChange={handleFileModelUpload}
             />
             <button 
-              className={`${modelButtonDisabled && chainButtonDisabled ? 'bg-white text-green-950' : 'bg-gray-300 bg-opacity-15 text-gray-300 cursor-not-allowed'} px-3 font-light rounded-full py-2`}
+              className={`px-3 font-light rounded-full py-2
+                ${modelButtonDisabled && chainButtonDisabled ? 
+                  'bg-white text-green-950'
+                  :
+                  'bg-gray-300 bg-opacity-15 text-gray-300 cursor-not-allowed'}
+                `}
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
