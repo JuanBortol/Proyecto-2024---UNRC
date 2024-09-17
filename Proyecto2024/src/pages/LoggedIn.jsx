@@ -76,7 +76,7 @@ export default function LoggedIn() {
       const response = await httpClient.post('http://localhost:5000/submit', formData);
       if (response.status === 200) {
         console.log('Submission successful');
-        navigate('/'); // To be changed
+        navigate('/result'); // To be changed
       } else {
         console.error('Submission failed');
       }
@@ -118,8 +118,8 @@ export default function LoggedIn() {
               <path d="m4.5 12.75 6 6 9-13.5"/>
               </svg>            
               :
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" class="mr-2 h-4 w-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" className="mr-2 h-6 w-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
               </svg>
               }
               cargar cadena
@@ -170,7 +170,7 @@ export default function LoggedIn() {
               disabled={isSubmitting}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='w-6 h-6'>
-                <path d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
               </svg>
             </button>
           </div>

@@ -4,6 +4,7 @@ import LoggedIn from './pages/LoggedIn';
 import Logout from './components/Logout';
 import History from './pages/History';
 import Report from './pages/Report';
+import Result from './pages/Result'
 import PrivateRoute from './components/PrivateRoute';
 
 function AppRouter() {
@@ -17,6 +18,7 @@ function AppRouter() {
           <Route path="/home" element={<LoggedIn />} />
           <Route path="/history" element={<History />} />
           <Route path="/report" element={<Report />} />
+          <Route path="/result" element={<Result />} />
         </Route>
       </Routes>
     </Router>
