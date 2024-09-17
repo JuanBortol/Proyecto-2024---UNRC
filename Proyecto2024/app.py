@@ -6,6 +6,7 @@ from database import db_session, Base, engine  # Importar db_session y Base desd
 from user import User
 from report import Report
 from prediction import Prediction
+from datetime import datetime
 import secrets
 
 
@@ -18,6 +19,7 @@ Base.metadata.create_all(engine)
 
 # Set the upload folder
 UPLOAD_FOLDER = 'uploads/'
+REPORT_FOLDER = 'reports/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Create the folder if it doesn't exist
@@ -165,43 +167,67 @@ def logout():
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
 
-@app.route("/reportPage", methods=['GET', 'POST'])
-def reportPage():
+@app.route("/submit_report", methods=['POST'])
+def submit_report():
     if 'user_id' in session:
         user_id = session['user_id']
-        if request.method == 'POST':
-            user = db_session.query(User).filter_by(id=user_id.first())
-            # Obtener los datos del formulario
-            incorrect_chain = request.form['incorrectProtein']
-            reason = request.form['reason']
-            username = user.username
+        user = db_session.query(User).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"message": "User not found"}), 404
 
-            # Verificar si los datos se están recibiendo correctamente
-            print(f"Cadena incorrecta: {incorrect_chain}")
-            print(f"Motivo: {reason}")
-            print(f"User: {username}")
+        # Get files and reason
+        chain_file = request.files.get('chain_file')
+        pdf_file = request.files.get('pdf_file')
+        reason = request.form.get('reason')
 
-            # Procesar archivo PDF (si es subido)
-            pdf = request.files.get('pdfUpload')
-            if pdf:
-                filename = secure_filename(pdf.filename)
-                pdf_path = os.path.join('uploads', filename)
-                pdf.save(pdf_path)
-                print(f"PDF guardado en: {pdf_path}")
+        if not chain_file or not reason:
+            return jsonify({"message": "Chain file and reason are required"}), 400
 
-            # Crear el nuevo reporte
-            new_report = Report(chain=incorrect_chain, reason=reason, user_id=user_id)
-            # Guardar el reporte en la base de datos
-            db_session.add(new_report)
-            db_session.commit()
+        current_date = datetime.utcnow().strftime("%Y-%m-%d")  # YYYY-MM-DD
+        chain_filename = secure_filename(chain_file.filename)
+        chain_name, _ = os.path.splitext(chain_filename)  # Gets rid of file extension
+        timestamp = datetime.utcnow().strftime("%H%M%S")
+        report_folder_name = f"{chain_name}_{timestamp}"
 
-            flash('Reporte enviado con éxito.')
-            return redirect(url_for('reportPage'))  # Redirigir tras el envío
+        # User folder
+        user_folder = os.path.join(REPORT_FOLDER, f"user_{user_id}")
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
 
-        return render_template('report.html', username=username)
+        # Date folder
+        date_folder = os.path.join(user_folder, current_date)
+        if not os.path.exists(date_folder):
+            os.makedirs(date_folder)
+
+        # Report folder
+        report_folder = os.path.join(date_folder, report_folder_name)
+        if not os.path.exists(report_folder):
+            os.makedirs(report_folder)
+
+        # Chain file handler
+        chain_path = os.path.join(report_folder, chain_filename)
+        chain_file.save(chain_path)
+
+        # PDF File handler
+        pdf_filename = None
+        if pdf_file:
+            pdf_filename = secure_filename(pdf_file.filename)
+            pdf_path = os.path.join(report_folder, pdf_filename)
+            pdf_file.save(pdf_path)
+
+        # Creates report
+        new_report = Report(
+            chain=chain_filename, 
+            pdf=pdf_filename, 
+            reason=reason, 
+            user_id=user_id
+        )
+        db_session.add(new_report)
+        db_session.commit()
+
+        return jsonify({"message": "Report successfully submitted"}), 200
     else:
-        flash('Debes iniciar sesión para acceder a esta página.')
-        return redirect(url_for('login'))
+        return jsonify({"error": "Unauthorized"}), 401
 
 @app.route('/predictions', methods=['GET'])
 def get_user_predictions():

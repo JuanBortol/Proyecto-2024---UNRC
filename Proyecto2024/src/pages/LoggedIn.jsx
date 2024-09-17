@@ -18,14 +18,6 @@ export default function LoggedIn() {
   const [modelFilename, setModelFilename] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [chainButtonDisabled, setChainButtonDisabled] = useState(false);
-  const [modelButtonDisabled, setModelButtonDisabled] = useState(false);
-  
-  useEffect(() => {
-    setChainButtonDisabled(!!chainFilename);
-    setModelButtonDisabled(!!modelFilename);
-  }, [chainFilename, modelFilename]);
-
   const handleFileChainUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -116,30 +108,34 @@ export default function LoggedIn() {
             {/* Chain button */}
             <button 
               className={`w-full rounded-full py-2 flex items-center justify-center
-                ${chainButtonDisabled ? 'bg-gray-300 bg-opacity-50 text-gray-800 cursor-not-allowed' : 'bg-white text-black'}
+                ${chainFilename !== null ? 'bg-gray-300 bg-opacity-50 text-gray-800 cursor-not-allowed' : 'bg-white text-black'}
               `}
               onClick={handleChainButtonClick}
-              disabled={chainButtonDisabled}
+              disabled={chainFilename !== null}
             >
-              {chainButtonDisabled ? 
+              {chainFilename !== null ? 
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='mr-2 h-6 w-6'>
               <path d="m4.5 12.75 6 6 9-13.5"/>
               </svg>            
               :
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6 mr-2">
-                <path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>}
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" class="mr-2 h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+              </svg>
+              }
               cargar cadena
             </button>
             {/* Model button */}
             <button 
               className={`w-full py-2 flex items-center justify-center rounded-full transition-colors duration-250
-              ${modelButtonDisabled ? 'bg-gray-300 bg-opacity-10 text-gray-300 cursor-not-allowed' : 'bg-transparent text-white hover:bg-white hover:text-green-950'}
+              ${modelFilename !== null ?
+                'bg-gray-300 bg-opacity-10 text-gray-300 cursor-not-allowed' 
+                :
+                'bg-transparent text-white hover:bg-white hover:text-green-950'}
               `}
               onClick={handleModelButtonClick}
-              disabled={modelButtonDisabled}
+              disabled={modelFilename !== null}
             >
-              {modelButtonDisabled ? 
+              {modelFilename !== null ? 
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='mr-2 h-6 w-6'>
               <path d="m4.5 12.75 6 6 9-13.5"/>
               </svg>            
@@ -164,7 +160,8 @@ export default function LoggedIn() {
             />
             <button 
               className={`px-3 font-light rounded-full py-2
-                ${modelButtonDisabled && chainButtonDisabled ? 
+                ${modelFilename !== null &&
+                  chainFilename !== null ? 
                   'bg-white text-green-950'
                   :
                   'bg-gray-300 bg-opacity-15 text-gray-300 cursor-not-allowed'}
