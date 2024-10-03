@@ -97,7 +97,7 @@ export default function LoggedIn() {
       navigate('/result'); // Redirige a la página de resultados
     } catch (error) {
       console.error('Error al enviar los archivos:', error);
-    } finally {   
+    } finally {
       setIsSubmitting(false);
     }
   };
