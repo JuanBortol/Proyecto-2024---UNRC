@@ -4,7 +4,7 @@ import LoggedIn from './pages/LoggedIn';
 import Logout from './components/Logout';
 import History from './pages/History';
 import Report from './pages/Report';
-import Result from './pages/Result'
+import Result from './pages/Result';
 import PrivateRoute from './components/PrivateRoute';
 
 function AppRouter() {

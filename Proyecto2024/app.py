@@ -26,7 +26,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-@app.route('/@me', methods=['GET'])
+@app.route('/', methods=['GET'])
 def get_current_user():
     user_id = session.get("user_id")
 
@@ -51,16 +51,21 @@ def upload_file():
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
-    file_type = request.form.get('type')
+    file_type = request.form.get('type')  # 'protein' or 'ligand'
 
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
         filename = secure_filename(file.filename)
+        # Save the file to the UPLOAD_FOLDER
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
         # Store filename in session
         session[f'{file_type}_filename'] = filename
         return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 200
+
 
 @app.route('/submit', methods=['POST'])
 def submit_files():
@@ -73,40 +78,38 @@ def submit_files():
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
-    chain_filename = session.get('chain_filename')
-    model_filename = session.get('model_filename')
-    result = 'placeholder'
+    # Get file names from session
+    protein_filename = session.get('protein_filename')
+    ligand_filename = session.get('ligand_filename')
 
-    if not chain_filename or not model_filename:
+    if not protein_filename or not ligand_filename:
         return jsonify({'error': 'Both files must be uploaded'}), 400
 
-    # Retrieve files from the request
-    chain_file = request.files.get('chain_file')
-    model_file = request.files.get('model_file')
-
-    if not chain_file or not model_file:
-        return jsonify({'error': 'Files are missing'}), 400
-
     try:
-        # Save the files
-        chain_filepath = os.path.join(app.config['UPLOAD_FOLDER'], chain_filename)
-        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], model_filename)
-        chain_file.save(chain_filepath)
-        model_file.save(model_filepath)
+        # Load the files from the filesystem
+        protein_filepath = os.path.join(app.config['UPLOAD_FOLDER'], protein_filename)
+        ligand_filepath = os.path.join(app.config['UPLOAD_FOLDER'], ligand_filename)
+
+        # Check if files exist
+        if not os.path.exists(protein_filepath) or not os.path.exists(ligand_filepath):
+            return jsonify({'error': 'Files not found on the server'}), 404
+
+        # Process the files (for example, perform the docking prediction)
+        result = 'placeholder'  # Replace with actual prediction logic
 
         # Save prediction information to the database
         prediction = Prediction(
             user_id=user_id,
-            chain_filename=chain_filename,
-            model_filename=model_filename,
+            protein_filename=protein_filename,
+            ligand_filename=ligand_filename,
             result=result
         )
         db_session.add(prediction)
         db_session.commit()
 
         # Clear filenames from session after submission
-        session.pop('chain_filename', None)
-        session.pop('model_filename', None)
+        session.pop('protein_filename', None)
+        session.pop('ligand_filename', None)
 
         return jsonify({'message': 'Files submitted and saved successfully'}), 200
     except Exception as e:
@@ -140,7 +143,7 @@ def register():
 
     return render_template('register.html')
 
-@app.route("/login", methods=['POST'])
+@app.route("/login", methods=['GET', 'POST'])
 def login():
     if 'user_id' in session:
         return jsonify({'message': 'User already logged in'}), 200
@@ -176,18 +179,18 @@ def submit_report():
             return jsonify({"message": "User not found"}), 404
 
         # Get files and reason
-        chain_file = request.files.get('chain_file')
+        protein_file = request.files.get('protein_file')
         pdf_file = request.files.get('pdf_file')
         reason = request.form.get('reason')
 
-        if not chain_file or not reason:
-            return jsonify({"message": "Chain file and reason are required"}), 400
+        if not protein_file or not reason:
+            return jsonify({"message": "protein file and reason are required"}), 400
 
         current_date = datetime.utcnow().strftime("%Y-%m-%d")  # YYYY-MM-DD
-        chain_filename = secure_filename(chain_file.filename)
-        chain_name, _ = os.path.splitext(chain_filename)  # Gets rid of file extension
+        protein_filename = secure_filename(protein_file.filename)
+        protein_name, _ = os.path.splitext(protein_filename)  # Gets rid of file extension
         timestamp = datetime.utcnow().strftime("%H%M%S")
-        report_folder_name = f"{chain_name}_{timestamp}"
+        report_folder_name = f"{protein_name}_{timestamp}"
 
         # User folder
         user_folder = os.path.join(REPORT_FOLDER, f"user_{user_id}")
@@ -204,9 +207,9 @@ def submit_report():
         if not os.path.exists(report_folder):
             os.makedirs(report_folder)
 
-        # Chain file handler
-        chain_path = os.path.join(report_folder, chain_filename)
-        chain_file.save(chain_path)
+        # protein file handler
+        protein_path = os.path.join(report_folder, protein_filename)
+        protein_file.save(protein_path)
 
         # PDF File handler
         pdf_filename = None
@@ -217,7 +220,7 @@ def submit_report():
 
         # Creates report
         new_report = Report(
-            chain=chain_filename, 
+            protein=protein_filename,
             pdf=pdf_filename, 
             reason=reason, 
             user_id=user_id
@@ -229,26 +232,65 @@ def submit_report():
     else:
         return jsonify({"error": "Unauthorized"}), 401
 
-@app.route('/predictions', methods=['GET'])
-def get_user_predictions():
-    user_id = session.get('user_id')
 
-    if not user_id:
-        return jsonify({'error': 'User not logged in'}), 401
+@app.route('/run_docking', methods=['POST'])
+def run_docking():
+    protein_file_path = os.path.join(UPLOAD_FOLDER, protein_file.filename)
+    ligand_file_path = os.path.join(UPLOAD_FOLDER, ligand_file.filename)
 
-    predictions = db_session.query(Prediction).filter_by(user_id=user_id).all()
+    protein_file.save(protein_file_path)
+    ligand_file.save(ligand_file_path)
 
-    predictions_data = [
-        {
-            'date': prediction.date.strftime('%d/%m/%y'),
-            'chain_filename': prediction.chain_filename,
-            'model_filename': prediction.model_filename,
-            'result': prediction.result
+    # Ejecutar el docking
+
+    client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
+
+    resultPocket = client.predict(
+        ligand_file=handle_file(ligand_file),
+        expand_size=10,
+        api_name="/get_pocket_by_ligand"
+    )
+
+    receptor_file = protein_file
+    resultDocking = client.predict(
+        receptor_pdb=handle_file(protein_file),
+        ligand_sdf=handle_file(ligand_file),
+        center_x=resultPocket[0],
+        center_y=resultPocket[1],
+        center_z=resultPocket[2],
+        size_x=resultPocket[3],
+        size_y=resultPocket[4],
+        size_z=resultPocket[5],
+        ligand_version="Pocket Augmentated (ligand which is more robust when the pocket is not well defined.)",
+        use_unidock=True,
+        task_name="Hello!!",
+        api_name="/_unimol_docking_wrapper"
+    )
+
+    a, b, c, d = resultDocking
+
+    try:
+        file_path = b['value']
+    except (TypeError, KeyError):
+        return jsonify({'result': f'La proteína {protein_file} no hace docking'}), 200
+
+    docking_score = None
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.startswith(">  <docking_score>"):
+                docking_score = file.readline().strip()
+
+    if docking_score:
+        listaDockingTrue.append(receptor_file)
+        response = {
+            'result': f'La proteína {receptor_file} hace docking con un score de {docking_score}',
+            'files_docked': listaDockingTrue
         }
-        for prediction in predictions
-    ]
+    else:
+        response = {'result': 'No se encontró el score de docking'}
 
-    return jsonify(predictions_data), 200
+    return jsonify(response), 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)

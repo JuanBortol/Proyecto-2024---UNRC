@@ -6,7 +6,7 @@ import { AppContext } from '../components/AppContext';
 
 export default function Report() {
   const { darkMode } = useContext(AppContext);
-  const [chainFile, setChainFile] = useState(null);
+  const [proteinFile, setProteinFile] = useState(null);
   const [pdfFile, setpdfFile] = useState(null);
   const [reason, setReason] = useState('');
 
@@ -20,13 +20,13 @@ export default function Report() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!chainFile || !reason) {
-      alert('Debe cargar la cadena y proveer una descripción del error.');
+    if (!proteinFile || !reason) {
+      alert('Debe cargar la protein y proveer una descripción del error.');
       return;
     }
   
     const formData = new FormData();
-    formData.append('chain_file', chainFile);
+    formData.append('protein_file', proteinFile);
     formData.append('pdf_file', pdfFile);
     formData.append('reason', reason);
   
@@ -66,11 +66,11 @@ export default function Report() {
                   type="button"
                   className={`
                     w-full py-2 px-8  rounded-full bg-white text-green-950 flex justify-center items-center
-                    ${chainFile !== null ? 'bg-gray-300 bg-opacity-50 text-gray-800 cursor-not-allowed' : 'bg-white text-black'}`}
-                    onClick={() => document.getElementById('chainInput').click()}
-                    disabled={chainFile !== null}
+                    ${proteinFile !== null ? 'bg-gray-300 bg-opacity-50 text-gray-800 cursor-not-allowed' : 'bg-white text-black'}`}
+                    onClick={() => document.getElementById('proteinInput').click()}
+                    disabled={proteinFile !== null}
                   >
-                  {chainFile !== null ? 
+                  {proteinFile !== null ?
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='mr-2 h-4 w-4'>
                   <path d="m4.5 12.75 6 6 9-13.5"/>
                   </svg>            
@@ -79,15 +79,15 @@ export default function Report() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                   </svg>
                   }
-                    cargar cadena
+                    Cargar Proteina (.pdb)
                 </button>
                 <input
                   type="file"
-                  id="chainInput"
-                  name="chain_file"
+                  id="proteinInput"
+                  name="protein_file"
                   accept=".txt"
                   style={{ display: 'none' }}
-                  onChange={(e) => handleFileChange(e, setChainFile)}
+                  onChange={(e) => handleFileChange(e, setProteinFile)}
                 />
                 <button
                   type="button"
