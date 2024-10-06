@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import httpClient from '../utils/httpClient';
 import { AppContext } from './AppContext';
-import Loading from '../components/Loading';
+import Loading from './Loading';
 
 export default function Logout() {
   const navigate = useNavigate();

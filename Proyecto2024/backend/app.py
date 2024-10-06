@@ -3,9 +3,9 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from database import db_session, Base, engine  # Importar db_session y Base desde database.py
 from gradio_client import Client, handle_file
-from user import User
-from report import Report
-from prediction import Prediction
+from models.user import User
+from models.report import Report
+from models.prediction import Prediction
 from datetime import datetime
 import secrets
 import os
@@ -281,9 +281,6 @@ def get_user_predictions():
 
 # Docking prediction
 def run_docking(protein_filepath, toxin_filepath):
-    print(protein_filepath)
-    print(toxin_filepath)
-    print('printeado arriba')
     try:
         # Initialize Gradio client
         client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
