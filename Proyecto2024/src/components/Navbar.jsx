@@ -16,7 +16,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-transparent fixed top-0 w-full">
+    <nav className={`${isOpen ? 'backdrop-blur' : 'backdrop-blur-0'} bg-transparent fixed top-0 w-full`}>
       <div className="container text-white mx-auto flex justify-between items-center p-2">
       <button className="text-white text-4xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
       onClick={handleHome}>

@@ -1,21 +1,17 @@
 import { useContext } from 'react';
 import { AppContext } from './AppContext';
 
-export default function Loading() {
+export default function PredictionLoading() {
   const { darkMode } = useContext(AppContext);
 
   return (
     <div
-      className={`bg-gradient-to-b ${
-        darkMode ? 'bg-black' : 'from-[#005F32] to-[#1B3127]'
-      } flex items-center justify-center text-white min-h-screen space-y-16`}
+      className={`fixed top-0 left-0 right-0 bottom-0 z-10 text-white min-h-screen backdrop-blur flex items-center justify-center font-extralight`}
     >
-      <div>
+      <div className='flex items-center justify-center'>
         <svg
           aria-hidden="true"
-          className={`w-8 h-8 ${
-            darkMode ? 'text-gray-200' : 'text-gray-600'
-          } animate-spin fill-white`}
+          className={`w-8 h-8 ${darkMode ? 'text-gray-200' : 'text-gray-600'} animate-spin fill-white`}
           viewBox="0 0 100 101"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -25,6 +21,7 @@ export default function Loading() {
             fill="currentFill"
           />
         </svg>
+        <p className='px-4 text-3xl'>cargando</p>
       </div>
     </div>
   );

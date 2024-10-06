@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import os
 from database import db_session, Base, engine  # Importar db_session y Base desde database.py
+from gradio_client import Client, handle_file
 from user import User
 from report import Report
 from prediction import Prediction
 from datetime import datetime
 import secrets
+import os
 
 
 app = Flask(__name__)
@@ -26,7 +27,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-@app.route('/', methods=['GET'])
+# Returns current user for AppContext no borrar pls
+@app.route('/@me', methods=['GET'])
 def get_current_user():
     user_id = session.get("user_id")
 
@@ -51,16 +53,13 @@ def upload_file():
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
-    file_type = request.form.get('type')  # 'protein' or 'ligand'
+    file_type = request.form.get('type')  # 'protein' or 'toxin'
 
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
         filename = secure_filename(file.filename)
-        # Save the file to the UPLOAD_FOLDER
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
 
         # Store filename in session
         session[f'{file_type}_filename'] = filename
@@ -80,41 +79,64 @@ def submit_files():
 
     # Get file names from session
     protein_filename = session.get('protein_filename')
-    ligand_filename = session.get('ligand_filename')
+    toxin_filename = session.get('toxin_filename')
 
-    if not protein_filename or not ligand_filename:
+    if not protein_filename or not toxin_filename:
         return jsonify({'error': 'Both files must be uploaded'}), 400
+    
+    # Retrieve files from the request
+    protein_file = request.files.get('protein_file')
+    toxin_file = request.files.get('toxin_file')
+
+    if not protein_file or not toxin_file:
+        return jsonify({'error': 'Files are missing'}), 400
 
     try:
-        # Load the files from the filesystem
+        # File paths
         protein_filepath = os.path.join(app.config['UPLOAD_FOLDER'], protein_filename)
-        ligand_filepath = os.path.join(app.config['UPLOAD_FOLDER'], ligand_filename)
+        toxin_filepath = os.path.join(app.config['UPLOAD_FOLDER'], toxin_filename)
+        protein_file.save(protein_filepath)
+        toxin_file.save(toxin_filepath)
 
-        # Check if files exist
-        if not os.path.exists(protein_filepath) or not os.path.exists(ligand_filepath):
+        # Files exist?
+        if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
             return jsonify({'error': 'Files not found on the server'}), 404
 
-        # Process the files (for example, perform the docking prediction)
-        result = 'placeholder'  # Replace with actual prediction logic
+        # DOCKING
+        docking_result = run_docking(protein_filepath, toxin_filepath)
 
-        # Save prediction information to the database
-        prediction = Prediction(
-            user_id=user_id,
-            protein_filename=protein_filename,
-            ligand_filename=ligand_filename,
-            result=result
-        )
-        db_session.add(prediction)
-        db_session.commit()
+        if docking_result.get('result') != None:
+            # Save prediction
+            prediction = Prediction(
+                user_id=user_id,
+                protein_filename=protein_filename,
+                toxin_filename=toxin_filename,
+                result=docking_result['result'],
+                docking_score=docking_result['docking_score']
+            )
+            db_session.add(prediction)
+            db_session.commit()
 
-        # Clear filenames from session after submission
-        session.pop('protein_filename', None)
-        session.pop('ligand_filename', None)
+            # Clear session filenames
+            session.pop('protein_filename', None)
+            session.pop('toxin_filename', None)
 
-        return jsonify({'message': 'Files submitted and saved successfully'}), 200
+            return jsonify({
+                'message': 'Files submitted and saved successfully',
+                'result': docking_result['result'],
+                'docking_score': docking_result['docking_score'],
+                'protein': protein_filename,
+                'toxin': toxin_filename
+            }), 200
+        else:
+            # Handle docking failure
+            return jsonify({
+                'error': docking_result.get('error')
+            }), 400
     except Exception as e:
         db_session.rollback()
         return jsonify({'error': str(e)}), 500
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -143,7 +165,7 @@ def register():
 
     return render_template('register.html')
 
-@app.route("/login", methods=['GET', 'POST'])
+@app.route("/login", methods=['POST'])
 def login():
     if 'user_id' in session:
         return jsonify({'message': 'User already logged in'}), 200
@@ -232,64 +254,87 @@ def submit_report():
     else:
         return jsonify({"error": "Unauthorized"}), 401
 
-
-@app.route('/run_docking', methods=['POST'])
-def run_docking():
-    protein_file_path = os.path.join(UPLOAD_FOLDER, protein_file.filename)
-    ligand_file_path = os.path.join(UPLOAD_FOLDER, ligand_file.filename)
-
-    protein_file.save(protein_file_path)
-    ligand_file.save(ligand_file_path)
-
-    # Ejecutar el docking
-
-    client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
-
-    resultPocket = client.predict(
-        ligand_file=handle_file(ligand_file),
-        expand_size=10,
-        api_name="/get_pocket_by_ligand"
-    )
-
-    receptor_file = protein_file
-    resultDocking = client.predict(
-        receptor_pdb=handle_file(protein_file),
-        ligand_sdf=handle_file(ligand_file),
-        center_x=resultPocket[0],
-        center_y=resultPocket[1],
-        center_z=resultPocket[2],
-        size_x=resultPocket[3],
-        size_y=resultPocket[4],
-        size_z=resultPocket[5],
-        ligand_version="Pocket Augmentated (ligand which is more robust when the pocket is not well defined.)",
-        use_unidock=True,
-        task_name="Hello!!",
-        api_name="/_unimol_docking_wrapper"
-    )
-
-    a, b, c, d = resultDocking
-
-    try:
-        file_path = b['value']
-    except (TypeError, KeyError):
-        return jsonify({'result': f'La proteína {protein_file} no hace docking'}), 200
-
-    docking_score = None
-    with open(file_path, 'r') as file:
-        for line in file:
-            if line.startswith(">  <docking_score>"):
-                docking_score = file.readline().strip()
-
-    if docking_score:
-        listaDockingTrue.append(receptor_file)
-        response = {
-            'result': f'La proteína {receptor_file} hace docking con un score de {docking_score}',
-            'files_docked': listaDockingTrue
+# Returns all predictions made by current user
+@app.route('/predictions', methods=['GET'])
+def get_user_predictions():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+    predictions = db_session.query(Prediction).filter_by(user_id=user_id).all()
+    predictions_data = [
+        {
+            'date': prediction.date.strftime('%d/%m/%y'),
+            'protein_filename': prediction.protein_filename,
+            'toxin_filename': prediction.toxin_filename,
+            'result': prediction.result,
+            'docking_score': prediction.docking_score
         }
-    else:
-        response = {'result': 'No se encontró el score de docking'}
+        for prediction in predictions
+    ]
+    return jsonify(predictions_data), 200
 
-    return jsonify(response), 200
+# Docking prediction
+def run_docking(protein_filepath, toxin_filepath):
+    print(protein_filepath)
+    print(toxin_filepath)
+    print('printeado arriba')
+    try:
+        # Initialize Gradio client
+        client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
+        
+        # Step 1: Predict pocket using toxin file
+        result_pocket = client.predict(
+            ligand_file=handle_file(toxin_filepath),
+            expand_size=10,
+            api_name="/get_pocket_by_ligand"
+        )
+        
+        # Step 2: Perform docking prediction with receptor and toxin files
+        result_docking = client.predict(
+            receptor_pdb=handle_file(protein_filepath),
+            ligand_sdf=handle_file(toxin_filepath),
+            center_x=result_pocket[0],
+            center_y=result_pocket[1],
+            center_z=result_pocket[2],
+            size_x=result_pocket[3],
+            size_y=result_pocket[4],
+            size_z=result_pocket[5],
+            model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
+            use_unidock=True,
+            task_name="Hello!!",
+            api_name="/_unimol_docking_wrapper"
+        )
+
+        # Extract docking information
+        a, b, c, d = result_docking
+        
+        try:
+            file_path = b['value']
+        except (TypeError, KeyError):
+            # No docking
+            return {
+                'result': False,
+                'docking_score': None
+            }
+
+        # Ensure the docking file exists
+        if not os.path.exists(file_path):
+            return {'error': 'Docking file not found'}
+
+        # Extract docking score from the file
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.startswith(">  <docking_score>"):
+                    # Docking can be performed
+                    docking_score = file.readline().strip()
+                    return {
+                        'result': True,
+                        'docking_score': docking_score
+                    }
+    except Exception as e:
+        return {
+            'error': str(e)
+        }
 
 
 if __name__ == "__main__":

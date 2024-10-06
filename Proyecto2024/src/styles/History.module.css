@@ -1,15 +1,20 @@
-.bgGradient {
+.bgGreenGradient {
     background: rgb(0,95,50);
     background: radial-gradient(circle, rgba(0,95,50,1) 44%, rgba(27,49,39,1) 100%);
 }
 
-.chainCol {
+.bgRedGradient {
+    background: rgb(95, 0, 0);
+    background: radial-gradient(circle, rgb(95, 0, 0) 44%, rgb(49, 27, 27) 100%);
+}
+
+.proteinCol {
     width: 400px;
     word-wrap: break-word;
     word-break: break-all;
 }
 
-.modelCol {
+.toxinCol {
     width: 400px;
     word-wrap: break-word;
     word-break: break-all;

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from datetime import datetime
 from database import Base
 
@@ -7,7 +7,8 @@ class Prediction(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, nullable=False)
-    chain_filename = Column(String, nullable=False)
-    model_filename = Column(String, nullable=False)
-    result = Column(String, nullable=False)  # placeholder
+    protein_filename = Column(String, nullable=False)
+    toxin_filename = Column(String, nullable=False)
+    result = Column(Boolean, nullable=False)
+    docking_score = Column(Integer)
     date = Column(DateTime, default=datetime.now)

@@ -49,10 +49,10 @@ export default function Report() {
   return (
     <div
       className={`flex items-center justify-center text-white min-h-screen 
-      ${darkMode ? 'bg-black' : styles.bgGradient}`}
+      ${darkMode ? 'bg-black' : styles.bgGreenGradient}`}
     >
       <Navbar />
-      <div className="container space-y-48 px-8 max-w-xl">
+      <div className="container min-h-full my-24 space-y-12 md:space-y-24 xl:space-y-48 px-8 max-w-xl">
         <h1 className="text-center text-7xl font-extrabold">reportar</h1>
         <div className="justify-center font-light">
           <p className='text-center py-2 font-extralight'>*la carga del archivo PDF es opcional.</p>
@@ -79,7 +79,7 @@ export default function Report() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                   </svg>
                   }
-                    Cargar Proteina (.pdb)
+                    cargar proteina (.pdb)
                 </button>
                 <input
                   type="file"

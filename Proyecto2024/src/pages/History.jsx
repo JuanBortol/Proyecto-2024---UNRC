@@ -15,7 +15,7 @@ export default function History() {
   useEffect(() => {
     httpClient.get('http://localhost:5000/predictions')
       .then((res) => {
-        setPredictions(res.data);
+        setPredictions(res.data.reverse());
         setLoading(false)
       })
       .catch((error) => {
@@ -30,10 +30,10 @@ export default function History() {
 
   return (
     <>
-      <div className={`flex items-center justify-center text-white min-h-screen 
-      ${darkMode ? 'bg-black' : styles.bgGradient}`}>
+      <div className={`flex items-center justify-center text-white min-h-screen px-4
+      ${darkMode ? 'bg-black' : styles.bgGreenGradient}`}>
         <Navbar />
-        <div className='container space-y-48 mx-4'>
+        <div className='container min-h-full my-24 space-y-24 md:space-y-48 mx-4'>
           <h1 className="text-center text-7xl font-extrabold">historial</h1>
           <div>
             <div className="flex justify-between w-full font-extralight text-lg text-white py-2">
@@ -57,9 +57,10 @@ export default function History() {
             <thead className="bg-opacity-20 bg-white">
                 <tr className="text-lg">
                   <th className="px-4 py-2 font-light">fecha</th>
-                  <th className="px-4 py-2 font-light chain-col">nombre</th>
-                  <th className="px-4 py-2 font-light model-col">motor utilizado</th>
-                  <th className="px-4 py-2 font-light">resultado</th>
+                  <th className="px-4 py-2 font-light chain-col">proteina</th>
+                  <th className="px-4 py-2 font-light model-col">toxina</th>
+                  <th className="px-4 py-2 font-light">docking</th>
+                  <th className="px-4 py-2 font-light">docking score</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,9 +68,10 @@ export default function History() {
                   selectedPredictions.map((prediction, index) => (
                     <tr key={index} className="bg-opacity-15 bg-white">
                       <td className="px-4 py-4">{prediction.date}</td>
-                      <td className={`px-4 py-4 ${styles.chainCol}`}>{prediction.chain_filename}</td>
-                      <td className={`px-4 py-4 ${styles.modelCol}`}>{prediction.model_filename}</td>
-                      <td className="px-4 py-4 font-extrabold">{prediction.result}</td>
+                      <td className={`px-4 py-4 ${styles.proteinCol}`}>{prediction.protein_filename}</td>
+                      <td className={`px-4 py-4 ${styles.toxinCol}`}>{prediction.toxin_filename}</td>
+                      <td className="px-4 py-4">{prediction.result ? 'Sí' : 'No'}</td>
+                      <td className="px-4 py-4 font-extrabold">{prediction.docking_score ? prediction.docking_score : '-'}</td>
                     </tr>
                   ))
                 ) : (
