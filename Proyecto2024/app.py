@@ -202,6 +202,7 @@ def submit_report():
 
         # Get files and reason
         protein_file = request.files.get('protein_file')
+        toxin_file = request.files.get('toxin_file')
         pdf_file = request.files.get('pdf_file')
         reason = request.form.get('reason')
 
@@ -211,6 +212,8 @@ def submit_report():
         current_date = datetime.utcnow().strftime("%Y-%m-%d")  # YYYY-MM-DD
         protein_filename = secure_filename(protein_file.filename)
         protein_name, _ = os.path.splitext(protein_filename)  # Gets rid of file extension
+        toxin_filename = secure_filename(toxin_file.filename)
+        toxin_name, _ = os.path.splitext(toxin_filename)  # Gets rid of file extension
         timestamp = datetime.utcnow().strftime("%H%M%S")
         report_folder_name = f"{protein_name}_{timestamp}"
 
@@ -229,9 +232,11 @@ def submit_report():
         if not os.path.exists(report_folder):
             os.makedirs(report_folder)
 
-        # protein file handler
+        # protein & toxin file handlers
         protein_path = os.path.join(report_folder, protein_filename)
         protein_file.save(protein_path)
+        toxin_path = os.path.join(report_folder, toxin_filename)
+        toxin_file.save(toxin_path)
 
         # PDF File handler
         pdf_filename = None
@@ -243,6 +248,7 @@ def submit_report():
         # Creates report
         new_report = Report(
             protein=protein_filename,
+            toxin=toxin_filename,
             pdf=pdf_filename, 
             reason=reason, 
             user_id=user_id

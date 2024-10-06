@@ -32,7 +32,7 @@ export default function NotLoggedIn() {
       {showLoginForm ? (
         <div className="flex flex-col items-center">
           <button
-            className={`bg-white font-extralight py-2 px-2 rounded-full shadow-md focus:outline-none`}
+            className={`bg-white font-extralight my-2 py-2 px-2 rounded-full shadow-md focus:outline-none`}
             onClick={handleGoBackButton}
           >
             <svg xmlns="http://www.w3.org/2000/svg" 

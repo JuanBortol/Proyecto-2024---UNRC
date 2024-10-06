@@ -8,7 +8,8 @@ class Report(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    chain = Column(String, nullable=False)
+    protein = Column(String, nullable=False)
+    toxin = Column(String, nullable=False)
     pdf = Column(String)
     reason = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
