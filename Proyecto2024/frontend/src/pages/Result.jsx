@@ -28,7 +28,7 @@ export default function Report() {
     >
       <Navbar />
       <div className='container space-y-24'>
-        <div className="flex flex-col items-center w-full  space-y-12 px-8">
+        <div className="flex flex-col items-center w-full space-y-12 px-8">
           <h1 className="text-center text-7xl font-extrabold">resultado</h1>
           {docking ? 
           <svg
@@ -60,7 +60,7 @@ export default function Report() {
             </strong>
           </p>
         </div>
-        <div className="w-full bg-gray-400 bg-opacity-15 xl:px-8">
+        <div className="w-full xl:px-8">
           <div className="grid grid-cols-1 mx-12 gap-24 md:mx-24 lg:grid-cols-2 lg:mx-8 xl:mx-32">
             <div className="bg-white p-2">
               <div className='w-full h-72 bg-black flex justify-center items-center'>
@@ -72,20 +72,22 @@ export default function Report() {
             </div>
             <div className="bg-white p-2">
               <div className='w-full h-72 bg-black flex justify-center items-center'>
-                <p> 2</p>
-              </div>
-            </div>
-            <div className="bg-white p-2">
-              <div className='w-full h-72 bg-black flex justify-center items-center'>
-                <p> 3</p>
-              </div>
-            </div>
-            <div className="bg-white p-2">
-              <div className='w-full h-72 bg-black flex justify-center items-center'>
-                <p> 4</p>
+                <p>Placeholder</p>
               </div>
             </div>
           </div>
+        <div className={`${docking ? '':'hidden'} flex justify-center py-8`}>
+        <button
+          type="button"
+          className={`sm:w-64 my-4 py-2 px-8 rounded-full bg-white text-green-950 flex justify-center items-center font-light`}
+          // onClick={}     to be changed
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="mr-2 w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+          predecir degradación
+        </button>
+        </div>
         </div>
       </div>
     </div>
