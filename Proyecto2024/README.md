@@ -24,12 +24,18 @@ Tener instalado:
 3. **Instalar los requerimientos**:
    ```bash
    pip install -r requirements.txt
+    
+4. **Instalar modulos de npm**:
+    ```bash
+    cd "/frontend"
+    npm install
+    cd ".."
  
-4. **Correr el frontend y el backend con script**:
+5. **Correr el frontend y el backend con script**:
    ```bash
    source script.sh
    
-2. **Ingresar a la pagina en la consola de frontend**:
+6. **Ingresar a la pagina en la consola de frontend**:
    ```bash
    "click + enter en la ruta a la pagina"
 
