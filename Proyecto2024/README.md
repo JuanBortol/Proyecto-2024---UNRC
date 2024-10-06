@@ -6,7 +6,7 @@ Para ejecutar la aplicación, seguí los siguientes pasos:
 
 Tener instalado:
 
-- [Node.js](https://nodejs.org/) (incluyendo npm)
+- [Node.js](https://nodejs.org/)(18.19.1) (incluyendo npm)
 - [Python](https://www.python.org/)
 - [VirtualEnv]
 
