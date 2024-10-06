@@ -8,37 +8,32 @@ Tener instalado:
 
 - [Node.js](https://nodejs.org/) (incluyendo npm)
 - [Python](https://www.python.org/)
+- [VirtualEnv]
 
 ## Pasos a seguir
 1. **Clonar el repositorio**:
    ```bash
    git clone https://github.com/JuanBortol/Proyecto-2024---UNRC.git
    cd Proyecto-2024---UNRC
-   ```
 
-2. **Flask Back-end**:
-   - Navega hacia el directorio donde se encuentra la aplicación:
-     ```bash
-     cd Proyecto2024
-     ```
-   - Instala las dependencias:
-     ```bash
-     pip install -r requirements.txt
-     ```
-   - Ejecutá el servidor Flask:
-     ```bash
-     python app.py
-     ```
+2. **Crear entorno virtual y activarlo**:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   
+3. **Instalar los requerimientos**:
+   ```bash
+   pip install -r requirements.txt
+ 
+4. **Correr el frontend y el backend con script**:
+   ```bash
+   source script.sh
+   
+2. **Ingresar a la pagina en la consola de frontend**:
+   ```bash
+   "click + enter en la ruta a la pagina"
 
-3. **React Front-end**:
-   - Instala las dependencias node:
-     ```bash
-     npm install
-     ```
-   - Ejecutá el servidor de desarrollo:
-     ```bash
-     npm run dev
-     ```
 
-4. **Accedé a la aplicación**:
-   Abrí tu navegador y entrá a `http://localhost:5173` (o el puerto que especifique Vite luego de ejecutar 'npm run dev').
+
+   
+  
