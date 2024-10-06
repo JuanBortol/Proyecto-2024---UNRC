@@ -20,8 +20,10 @@ Base.metadata.create_all(engine)
 
 # Set the upload folder
 UPLOAD_FOLDER = 'uploads/'
-REPORT_FOLDER = 'reports/'
+REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'reports')
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
 # Create the folder if it doesn't exist
 if not os.path.exists(UPLOAD_FOLDER):
@@ -92,9 +94,23 @@ def submit_files():
         return jsonify({'error': 'Files are missing'}), 400
 
     try:
+        # Set up the folder path
+        current_date = datetime.utcnow().strftime("%Y_%m_%d")
+        timestamp = datetime.utcnow().strftime("%H%M%S")
+        protein_name = os.path.splitext(protein_filename)[0]  # Get rid of extension
+        
+        # path: uploads/predictions/user_{user_id}/YYYY_MM_DD/{protein_name}_{timestamp}
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'predictions', f'user_{user_id}', current_date)
+        prediction_folder = os.path.join(user_folder, f'{protein_name}_{timestamp}')
+        
+        # Create the directories if they don't exist
+        os.makedirs(prediction_folder, exist_ok=True)
+        
         # File paths
-        protein_filepath = os.path.join(app.config['UPLOAD_FOLDER'], protein_filename)
-        toxin_filepath = os.path.join(app.config['UPLOAD_FOLDER'], toxin_filename)
+        protein_filepath = os.path.join(prediction_folder, protein_filename)
+        toxin_filepath = os.path.join(prediction_folder, toxin_filename)
+        
+        # Save the files
         protein_file.save(protein_filepath)
         toxin_file.save(toxin_filepath)
 
