@@ -7,8 +7,11 @@ from models.user import User
 from models.report import Report
 from models.prediction import Prediction
 from datetime import datetime
+from Bio import PDB
 import secrets
 import os
+import numpy as np
+import tensorflow as tf
 
 
 app = Flask(__name__)
@@ -22,6 +25,9 @@ Base.metadata.create_all(engine)
 UPLOAD_FOLDER = 'uploads/'
 REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'reports')
 
+
+default_model_filename = 'modelo_predeterminado.py'
+model_filepath = os.path.join(UPLOAD_FOLDER, 'models', default_model_filename)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
@@ -133,9 +139,6 @@ def submit_files():
             db_session.add(prediction)
             db_session.commit()
 
-            # Clear session filenames
-            session.pop('protein_filename', None)
-            session.pop('toxin_filename', None)
 
             return jsonify({
                 'message': 'Files submitted and saved successfully',
@@ -145,13 +148,43 @@ def submit_files():
                 'toxin': toxin_filename
             }), 200
         else:
-            # Handle docking failure
             return jsonify({
                 'error': docking_result.get('error')
             }), 400
     except Exception as e:
         db_session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/submit_model', methods=['POST'])
+def submit_model():
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    user_id = session['user_id']
+    user = db_session.query(User).filter_by(id=user_id).first()
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    model_file = request.files.get('model_file')
+
+    # Definir un modelo predeterminado
+    default_model_filename = 'modelo_predeterminado.X'  # Cambia esto a tu archivo predeterminado
+
+    if not model_file:
+        # Si no se proporciona un archivo, usa el modelo predeterminado
+        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', default_model_filename)
+    else:
+        model_filename = model_file.filename
+        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', model_filename)
+        model_file.save(model_filepath)
+
+    try:
+        # Aquí puedes añadir cualquier lógica adicional que necesites para el modelo cargado
+        return jsonify({'message': 'Model uploaded successfully', 'model_filename': model_filename}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -354,6 +387,24 @@ def run_docking(protein_filepath, toxin_filepath):
         return {
             'error': str(e)
         }
+
+
+@app.route('/degradation', methods=['POST'])
+def predecir(protein_file):
+    model = tf.keras.models.load_model('modelo_predeterminado.h5')
+   # inicializa el parser
+    parser = PDB.PDBParser()
+
+    structure = parser.get_structure('protein_file', new_pdb_file)
+
+    # extrae las características de la proteina
+    num_amino_acids = len([res for res in structure.get_residues() if PDB.is_aa(res)])
+
+    # crea un array con las características
+    new_data = np.array([[num_amino_acids]])
+
+    prediction = model.predict(protein_file)
+    return jsonify({prediction})
 
 
 if __name__ == "__main__":

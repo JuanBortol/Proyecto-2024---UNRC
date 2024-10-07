@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import styles from '../styles/History.module.css';
 import { AppContext } from '../components/AppContext';
+import httpClient from "../utils/httpClient.js";
 
 export default function Report() {
   const { darkMode } = useContext(AppContext);
@@ -28,13 +29,42 @@ export default function Report() {
     const file = event.target.files[0];
     if (file) {
       setModelFilename(file.name);
+    } else {
+      setModelFilename("modelo predeterminado"); // Restablece al modelo predeterminado si no hay archivo
     }
   };
+
 
   if (!results) {
     return null;
   }
   const docking = results.result;
+
+  const submitModel = async () => {
+    if (!modelFilename) {
+      console.error('No hay un modelo cargado.');
+      return;
+    }
+
+    const formData = new FormData();
+    const modelFile = fileInputModelRef.current.files[0];
+    if (modelFile) formData.append('model_file', modelFile);
+
+    try {
+      const response = await httpClient.post('http://localhost:5000/submit_model', formData);
+      console.log(response.status);
+      if (response.status === 200) {
+        console.log('Model submission successful');
+        navigate('/degradation');
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+      alert(`ERROR: ${error.response ? error.response.data : error.message}`);
+      setModelFilename(modelFile);
+      navigate('/');
+    }
+  };
+
 
   return (
       <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
@@ -101,7 +131,7 @@ export default function Report() {
                 <button
                     type="button"
                     className="sm:w-64 py-2 px-8 rounded-full bg-white text-green-950 flex justify-center items-center font-light"
-                    // onClick={}
+                    onClick={submitModel}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1}
                        stroke="currentColor" className="mr-2 w-4 h-4">
