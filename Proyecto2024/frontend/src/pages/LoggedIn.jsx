@@ -1,6 +1,7 @@
 import { useRef, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../components/Navbar";
+import Check from '../components/Check';
 import styles from '../styles/LoggedIn.module.css';
 import httpClient from '../utils/httpClient';
 import { AppContext } from '../components/AppContext';
@@ -92,7 +93,7 @@ export default function LoggedIn() {
       console.log(response.status)
       if (response.status === 200) {
         console.log('Submission successful');
-        navigate('/result', { state: { results: response.data } });
+        navigate('/docking_result', { state: { results: response.data } });
       }
     } catch (error) {
         alert(`ERROR: ${error.response.data.error}`)
@@ -132,9 +133,7 @@ export default function LoggedIn() {
                   disabled={proteinFilename !== null}
               >
                 {proteinFilename !== null ?
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='mr-2 h-6 w-6'>
-                      <path d="m4.5 12.75 6 6 9-13.5"/>
-                    </svg>
+                    <Check className='mr-2 h-6 w-6' />
                     :
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" className="mr-2 h-6 w-6">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
@@ -154,9 +153,7 @@ export default function LoggedIn() {
                   disabled={toxinFilename !== null}
               >
                 {toxinFilename !== null ?
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className='mr-2 h-6 w-6'>
-                      <path d="m4.5 12.75 6 6 9-13.5"/>
-                    </svg>
+                    <Check className='mr-2 h-6 w-6' />
                     :
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6 mr-2">
                       <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />

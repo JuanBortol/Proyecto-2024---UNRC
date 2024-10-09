@@ -132,20 +132,26 @@ def submit_files():
             prediction = Prediction(
                 user_id=user_id,
                 protein_filename=protein_filename,
+                protein_filepath=protein_filepath,
                 toxin_filename=toxin_filename,
+                toxin_filepath=toxin_filepath,
                 result=docking_result['result'],
                 docking_score=docking_result['docking_score']
             )
             db_session.add(prediction)
             db_session.commit()
 
+            # Clear session filenames
+            session.pop('protein_filename', None)
+            session.pop('toxin_filename', None)
 
             return jsonify({
                 'message': 'Files submitted and saved successfully',
                 'result': docking_result['result'],
                 'docking_score': docking_result['docking_score'],
                 'protein': protein_filename,
-                'toxin': toxin_filename
+                'toxin': toxin_filename,
+                'prediction_id': prediction.id
             }), 200
         else:
             return jsonify({
@@ -155,21 +161,35 @@ def submit_files():
         db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/submit_model', methods=['POST'])
 def submit_model():
     if 'user_id' not in session:
-        return jsonify({'error': 'User not logged in'}), 401
+        return jsonify({'error': 'Usuario no logeado'}), 401
 
     user_id = session['user_id']
     user = db_session.query(User).filter_by(id=user_id).first()
 
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'Usuario no encontrado'}), 404
 
+    # Get model file and prediction id from request
     model_file = request.files.get('model_file')
+    prediction_id = request.form.get('prediction_id')
+    
+    if not prediction_id:
+        return jsonify({'error': 'Fallo al proveer ID de Predicción'}), 400
 
-    # Definir un modelo predeterminado
-    default_model_filename = 'modelo_predeterminado.X'  # Cambia esto a tu archivo predeterminado
+    # Retrieve the Prediction object
+    prediction = db_session.query(Prediction).filter_by(id=prediction_id, user_id=session['user_id']).first()
+
+    if not prediction:
+        return jsonify({'error': 'No se ha encontrado la predicción'}), 404
+    
+    # Models folder
+    models_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'models')
+    if not os.path.exists(models_dir):
+        os.makedirs(models_dir)
 
     if not model_file:
         # Si no se proporciona un archivo, usa el modelo predeterminado
@@ -179,12 +199,22 @@ def submit_model():
         model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', model_filename)
         model_file.save(model_filepath)
 
+    # Filepaths for both the protein and toxin    
+    protein_filepath = prediction.protein_filepath
+    toxin_filepath = prediction.toxin_filepath
+    
+    if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
+        return jsonify({'error': 'Los archivos subidos no se encuentran en el servidor'}), 404
+
     try:
-        # Aquí puedes añadir cualquier lógica adicional que necesites para el modelo cargado
-        return jsonify({'message': 'Model uploaded successfully', 'model_filename': model_filename}), 200
+        degradation_result = run_predict_degradation(protein_filepath, model_filepath)
+        
+        return jsonify({
+            'message': 'Predicción de degradación completada',
+            'degradation_result': degradation_result
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -330,81 +360,89 @@ def get_user_predictions():
 
 # Docking prediction
 def run_docking(protein_filepath, toxin_filepath):
-    try:
+    return {
+        'result': True,
+        'docking_score': -1.23456789
+    }
+    # Commented for testing purposes
+    # try:
         # Initialize Gradio client
-        client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
+        # client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
         
-        # Step 1: Predict pocket using toxin file
-        result_pocket = client.predict(
-            ligand_file=handle_file(toxin_filepath),
-            expand_size=10,
-            api_name="/get_pocket_by_ligand"
-        )
+        # # Step 1: Predict pocket using toxin file
+        # result_pocket = client.predict(
+        #     ligand_file=handle_file(toxin_filepath),
+        #     expand_size=10,
+        #     api_name="/get_pocket_by_ligand"
+        # )
         
-        # Step 2: Perform docking prediction with receptor and toxin files
-        result_docking = client.predict(
-            receptor_pdb=handle_file(protein_filepath),
-            ligand_sdf=handle_file(toxin_filepath),
-            center_x=result_pocket[0],
-            center_y=result_pocket[1],
-            center_z=result_pocket[2],
-            size_x=result_pocket[3],
-            size_y=result_pocket[4],
-            size_z=result_pocket[5],
-            model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
-            use_unidock=True,
-            task_name="Hello!!",
-            api_name="/_unimol_docking_wrapper"
-        )
+        # # Step 2: Perform docking prediction with receptor and toxin files
+        # result_docking = client.predict(
+        #     receptor_pdb=handle_file(protein_filepath),
+        #     ligand_sdf=handle_file(toxin_filepath),
+        #     center_x=result_pocket[0],
+        #     center_y=result_pocket[1],
+        #     center_z=result_pocket[2],
+        #     size_x=result_pocket[3],
+        #     size_y=result_pocket[4],
+        #     size_z=result_pocket[5],
+        #     model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
+        #     use_unidock=True,
+        #     task_name="Hello!!",
+        #     api_name="/_unimol_docking_wrapper"
+        # )
 
-        # Extract docking information
-        a, b, c, d = result_docking
+        # # Extract docking information
+        # a, b, c, d = result_docking
         
-        try:
-            file_path = b['value']
-        except (TypeError, KeyError):
-            # No docking
-            return {
-                'result': False,
-                'docking_score': None
-            }
+        # try:
+        #     file_path = b['value']
+        # except (TypeError, KeyError):
+        #     # No docking
+        #     return {
+        #         'result': False,
+        #         'docking_score': None
+        #     }
 
-        # Ensure the docking file exists
-        if not os.path.exists(file_path):
-            return {'error': 'Docking file not found'}
+    #     # Ensure the docking file exists
+    #     if not os.path.exists(file_path):
+    #         return {'error': 'Docking file not found'}
 
-        # Extract docking score from the file
-        with open(file_path, 'r') as file:
-            for line in file:
-                if line.startswith(">  <docking_score>"):
-                    # Docking can be performed
-                    docking_score = file.readline().strip()
-                    return {
-                        'result': True,
-                        'docking_score': docking_score
-                    }
-    except Exception as e:
-        return {
-            'error': str(e)
-        }
+    #     # Extract docking score from the file
+    #     with open(file_path, 'r') as file:
+    #         for line in file:
+    #             if line.startswith(">  <docking_score>"):
+    #                 # Docking can be performed
+    #                 docking_score = file.readline().strip()
+    #                 return {
+    #                     'result': True,
+    #                     'docking_score': docking_score
+    #                 }
+    # except Exception as e:
+    #     return {
+    #         'error': str(e)
+    #     }
 
 
-@app.route('/degradation', methods=['POST'])
-def predecir(protein_file):
-    model = tf.keras.models.load_model('modelo_predeterminado.h5')
-   # inicializa el parser
-    parser = PDB.PDBParser()
+def run_predict_degradation(protein_filepath, model_filepath):
+#     # Hardcoded model for testing
+#     model = tf.keras.models.load_model('modelo_predeterminado.h5')
 
-    structure = parser.get_structure('protein_file', new_pdb_file)
+#    # inicializa el parser
+#     parser = PDB.PDBParser()
 
-    # extrae las características de la proteina
-    num_amino_acids = len([res for res in structure.get_residues() if PDB.is_aa(res)])
+#     #
+#     structure = parser.get_structure('protein_file', protein_filepath)
 
-    # crea un array con las características
-    new_data = np.array([[num_amino_acids]])
+#     # extrae las características de la proteina
+#     num_amino_acids = len([res for res in structure.get_residues() if PDB.is_aa(res)])
 
-    prediction = model.predict(protein_file)
-    return jsonify({prediction})
+#     # crea un array con las características
+#     new_data = np.array([[num_amino_acids]])
+    
+#     prediction = model.predict(new_data)
+
+    return True
 
 
 if __name__ == "__main__":
