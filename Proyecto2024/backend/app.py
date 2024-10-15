@@ -7,7 +7,10 @@ from models.user import User
 from models.report import Report
 from models.prediction import Prediction
 from datetime import datetime
-from Bio import PDB
+from tensorflow.keras import layers, models
+from Bio.PDB import PDBParser
+import numpy as np
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import secrets
 import os
 import numpy as np
@@ -424,25 +427,56 @@ def run_docking(protein_filepath, toxin_filepath):
     #     }
 
 
-def run_predict_degradation(protein_filepath, model_filepath):
-#     # Hardcoded model for testing
-#     model = tf.keras.models.load_model('modelo_predeterminado.h5')
+def run_predict_degradation(protein_filepath):
+    def pdb_to_numeric_padded(pdb_files, max_len=1000):
+        sequences = []
+        for pdb_file in pdb_files:
+            coords = pdb_to_numeric(pdb_file)
+            sequences.append(coords)
 
-#    # inicializa el parser
-#     parser = PDB.PDBParser()
+        # Padeamos las secuencias para que todas tengan el mismo número de átomos, con 3 columnas (x, y, z)
+        padded_sequences = pad_sequences(sequences, maxlen=max_len, padding='post', dtype='float32')
+        return padded_sequences
 
-#     #
-#     structure = parser.get_structure('protein_file', protein_filepath)
+    def pdb_to_numeric(pdb_file):
+        parser = PDBParser()
+        structure = parser.get_structure('protein', pdb_file)
 
-#     # extrae las características de la proteina
-#     num_amino_acids = len([res for res in structure.get_residues() if PDB.is_aa(res)])
+        atom_coords = []
+        for model in structure:
+            for chain in model:
+                for residue in chain:
+                    for atom in residue:
+                        atom_coords.append(atom.coord)  # Coordenadas (x, y, z)
 
-#     # crea un array con las características
-#     new_data = np.array([[num_amino_acids]])
-    
-#     prediction = model.predict(new_data)
+        # Convertir a un array numpy
+        atom_coords = np.array(atom_coords)
 
-    return True
+        # Normalizar las coordenadas
+        atom_coords = (atom_coords - np.mean(atom_coords, axis=0)) / np.std(atom_coords, axis=0)
+
+        return atom_coords
+
+    # Función para realizar predicción sobre una proteína PDB
+    def predict_protein(protein, model, max_len=1000):
+        # Convertir el archivo PDB en una representación numérica
+        protein_numeric = pdb_to_numeric_padded([protein], max_len=max_len)
+
+        # Realizar la predicción
+        prediction = model.predict(protein_numeric)
+
+        # Retornar el valor de la predicción
+        return prediction[0][0]
+
+    model = tf.keras.models.load_model('mi_modelo.h5')
+
+    prediction_score = predict_protein(protein_filepath, model)
+
+    return jsonify(
+        {
+            'prediction': prediction_score
+        }
+    )
 
 
 if __name__ == "__main__":
