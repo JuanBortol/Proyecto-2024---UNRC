@@ -164,7 +164,6 @@ def submit_files():
         db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/submit_model', methods=['POST'])
 def submit_model():
     if 'user_id' not in session:
@@ -179,7 +178,7 @@ def submit_model():
     # Get model file and prediction id from request
     model_file = request.files.get('model_file')
     prediction_id = request.form.get('prediction_id')
-    
+
     if not prediction_id:
         return jsonify({'error': 'Fallo al proveer ID de Predicción'}), 400
 
@@ -188,7 +187,7 @@ def submit_model():
 
     if not prediction:
         return jsonify({'error': 'No se ha encontrado la predicción'}), 404
-    
+
     # Models folder
     models_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'models')
     if not os.path.exists(models_dir):
@@ -205,17 +204,20 @@ def submit_model():
     # Filepaths for both the protein and toxin    
     protein_filepath = prediction.protein_filepath
     toxin_filepath = prediction.toxin_filepath
-    
+
     if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
         return jsonify({'error': 'Los archivos subidos no se encuentran en el servidor'}), 404
 
     try:
-        degradation_result = run_predict_degradation(protein_filepath, model_filepath)
-        
+        degradation_result = run_predict_degradation(protein_filepath)
+
+        d_r = float(degradation_result)
+
         return jsonify({
             'message': 'Predicción de degradación completada',
-            'degradation_result': degradation_result
+            'degradation_result': d_r
         }), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -458,12 +460,12 @@ def run_predict_degradation(protein_filepath):
         return atom_coords
 
     # Función para realizar predicción sobre una proteína PDB
-    def predict_protein(protein, model, max_len=1000):
+    def predict_protein(protein, modelo_keras, max_len=1000):
         # Convertir el archivo PDB en una representación numérica
         protein_numeric = pdb_to_numeric_padded([protein], max_len=max_len)
 
         # Realizar la predicción
-        prediction = model.predict(protein_numeric)
+        prediction = modelo_keras.predict(protein_numeric)
 
         # Retornar el valor de la predicción
         return prediction[0][0]
@@ -472,11 +474,7 @@ def run_predict_degradation(protein_filepath):
 
     prediction_score = predict_protein(protein_filepath, model)
 
-    return jsonify(
-        {
-            'prediction': prediction_score
-        }
-    )
+    return prediction_score
 
 
 if __name__ == "__main__":

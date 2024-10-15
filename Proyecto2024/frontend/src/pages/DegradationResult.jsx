@@ -7,17 +7,24 @@ import { AppContext } from '../components/AppContext.jsx';
 
 export default function DegradationResult() {
   const { darkMode } = useContext(AppContext);
-  // const navigate = useNavigate();
-  // const location = useLocation();
-  // const results = location.state?.results;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const results = location.state?.results;
 
-  // useEffect(() => {
-  //   if (!results) {
-  //     navigate('/');
-  //   }
-  // }, [navigate, results]);
+  useEffect(() => {
+     if (!results) {
+       navigate('/');
+     }
+  }, [navigate, results]);
 
-  const degrades = true; // For testing, will change later
+  let degrades;
+
+  console.log(results);
+  if(results.degradation_result > 0.70 && results.degradation_result < 1.30){
+      degrades=true
+  }else{
+      degrades=false
+  }
 
   return (
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
@@ -37,6 +44,11 @@ export default function DegradationResult() {
           <p className="text-4xl font-extralight text-center">
             la proteína ingresada <br />
             <strong className="font-bold">{degrades ? 'puede ser degradada' : 'no puede ser degradada'}</strong>
+              <br/>
+              <br/>
+              <strong>
+                  Score: {results.degradation_result}
+              </strong>
           </p>
         </div>
 
