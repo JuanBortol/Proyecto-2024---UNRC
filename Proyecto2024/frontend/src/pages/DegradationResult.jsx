@@ -17,14 +17,7 @@ export default function DegradationResult() {
      }
   }, [navigate, results]);
 
-  let degrades;
-
-  console.log(results);
-  if(results.degradation_result > 0.70 && results.degradation_result < 1.30){
-      degrades=true
-  }else{
-      degrades=false
-  }
+  const degrades = results.degradation_result > 0.70 && results.degradation_result < 1.30
 
   return (
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 

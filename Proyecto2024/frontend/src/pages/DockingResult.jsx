@@ -41,7 +41,6 @@ export default function DockingResult() {
 
   const handleSubmit = async () => {
     if (selectedModel === "custom" && !fileName) {
-      console.error('No hay un modelo cargado.');
       alert('Por favor, carga un modelo personalizado o selecciona el modelo predeterminado.');
       return;
     }
@@ -50,8 +49,9 @@ export default function DockingResult() {
     const formData = new FormData();
     if (selectedModel === "custom" && fileInputModelRef.current.files[0]) {
       formData.append('model_file', fileInputModelRef.current.files[0]);
-      formData.append('prediction_id', results.prediction_id)
     }
+    
+    formData.append('prediction_id', results.prediction_id)
 
     try {
       const response = await httpClient.post('http://localhost:5000/submit_model', formData, {
@@ -74,6 +74,7 @@ export default function DockingResult() {
   };
 
   return (
+    <>
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
       ${darkMode ? 'bg-black' : (docking ? styles.bgGreenGradient : styles.bgRedGradient)}`}>
       <Navbar />
@@ -137,10 +138,10 @@ export default function DockingResult() {
                     } border`}
                   onClick={() => setSelectedModel("default")}
                 >
-                  <h3 className="text-xl font-semibold text-emerald-100 mb-2">
+                  <h3 className="text-xl font-semibold text-white/90 mb-2">
                     modelo predeterminado
                   </h3>
-                  <p className="text-emerald-200 text-center mb-4 font-thin">
+                  <p className="text-white/75 text-center mb-4 font-thin">
                     utilizá nuestro modelo preentrenado
                   </p>
                   {selectedModel === "default" && (
@@ -166,10 +167,10 @@ export default function DockingResult() {
                     } border`}
                   onClick={() => setSelectedModel("custom")}
                 >
-                  <h3 className="text-xl font-semibold text-emerald-100 mb-2">
+                  <h3 className="text-xl font-semibold text-white/90 mb-2">
                     modelo personalizado
                   </h3>
-                  <p className="text-emerald-200 text-center mb-4 font-thin">
+                  <p className="text-white/75 text-center mb-4 font-thin">
                     subí tu propio modelo entrenado
                   </p>
                   {selectedModel === "custom" && (
@@ -220,7 +221,8 @@ export default function DockingResult() {
           )}
         </div>
       </div>
-      {isSubmitting ? <PredictionLoading /> : null}
     </div>
+    {isSubmitting ? <PredictionLoading /> : null}
+    </>
   );
 }

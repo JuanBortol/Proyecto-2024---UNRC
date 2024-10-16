@@ -29,8 +29,8 @@ UPLOAD_FOLDER = 'uploads/'
 REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'reports')
 
 
-default_model_filename = 'modelo_predeterminado.py'
-model_filepath = os.path.join(UPLOAD_FOLDER, 'models', default_model_filename)
+default_model_filename = 'mi_modelo.h5'
+default_model_filepath = os.path.join(UPLOAD_FOLDER, 'models', 'default', default_model_filename)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
@@ -195,7 +195,7 @@ def submit_model():
 
     if not model_file:
         # Si no se proporciona un archivo, usa el modelo predeterminado
-        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', default_model_filename)
+        model_filepath = default_model_filepath
     else:
         model_filename = model_file.filename
         model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', model_filename)
@@ -206,10 +206,10 @@ def submit_model():
     toxin_filepath = prediction.toxin_filepath
 
     if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
-        return jsonify({'error': 'Los archivos subidos no se encuentran en el servidor'}), 404
+        return jsonify({'error': 'El archivo .pdb o .sdf no se encuentran en el servidor'}), 404
 
     try:
-        degradation_result = run_predict_degradation(protein_filepath)
+        degradation_result = run_predict_degradation(protein_filepath, model_filepath)
 
         d_r = float(degradation_result)
 
@@ -429,7 +429,7 @@ def run_docking(protein_filepath, toxin_filepath):
     #     }
 
 
-def run_predict_degradation(protein_filepath):
+def run_predict_degradation(protein_filepath, model_filepath):
     def pdb_to_numeric_padded(pdb_files, max_len=1000):
         sequences = []
         for pdb_file in pdb_files:
@@ -470,7 +470,7 @@ def run_predict_degradation(protein_filepath):
         # Retornar el valor de la predicción
         return prediction[0][0]
 
-    model = tf.keras.models.load_model('mi_modelo.h5')
+    model = tf.keras.models.load_model(model_filepath)
 
     prediction_score = predict_protein(protein_filepath, model)
 

@@ -29,7 +29,7 @@ const Navbar = () => {
           onClick={handleReport}
           >reportar</a>
         <a className="text-sm cursor-pointer" onClick={handleHistory}>historial</a>
-        <button className='bg-white rounded-full py-2 px-8 text-green-950 font-light' onClick={handleLogout}>
+        <button className='bg-white rounded-full py-2 px-8 text-black font-light' onClick={handleLogout}>
         logout
         </button>
         <DarkModeButton
