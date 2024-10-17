@@ -29,12 +29,12 @@ const Navbar = () => {
           onClick={handleReport}
           >reportar</a>
         <a className="text-sm cursor-pointer" onClick={handleHistory}>historial</a>
-        <button className='bg-white rounded-full py-2 px-8 text-black font-light' onClick={handleLogout}>
-        logout
-        </button>
-        <DarkModeButton
-        height='28px' className="size-8"
-        ></DarkModeButton>
+          <button className='bg-white rounded-full py-2 px-8 text-black font-light' onClick={handleLogout}>
+            logout
+          </button>
+          <DarkModeButton
+              height='28px' className="size-8"
+          ></DarkModeButton>
         </div>
         
         {/* Mobile Menu Button */}

@@ -41,17 +41,28 @@ export default function DockingResult() {
 
   const handleSubmit = async () => {
     if (selectedModel === "custom" && !fileName) {
+      console.error('No hay un modelo cargado.');
       alert('Por favor, carga un modelo personalizado o selecciona el modelo predeterminado.');
       return;
     }
+
+    if (!results.prediction_id) {
+      console.error('No se ha encontrado un ID de predicción válido.');
+      alert('Error: No hay una predicción válida.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData();
-    if (selectedModel === "custom" && fileInputModelRef.current.files[0]) {
+
+    if (selectedModel === "default") {
+      formData.append('mi_modelo.h5', 'default');
+    } else if (selectedModel === "custom" && fileInputModelRef.current.files[0]) {
       formData.append('model_file', fileInputModelRef.current.files[0]);
     }
-    
-    formData.append('prediction_id', results.prediction_id)
+
+    formData.append('prediction_id', results.prediction_id);
 
     try {
       const response = await httpClient.post('http://localhost:5000/submit_model', formData, {
@@ -59,10 +70,10 @@ export default function DockingResult() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log(response.status);
+
       if (response.status === 200) {
         console.log('Model submission successful');
-        navigate('/degradation_result', { state: { results: response.data } })
+        navigate('/degradation_result', { state: { results: response.data } });
       }
     } catch (error) {
       console.error('Error en la solicitud:', error);
@@ -73,8 +84,8 @@ export default function DockingResult() {
     }
   };
 
+
   return (
-    <>
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
       ${darkMode ? 'bg-black' : (docking ? styles.bgGreenGradient : styles.bgRedGradient)}`}>
       <Navbar />
@@ -145,7 +156,7 @@ export default function DockingResult() {
                     utilizá nuestro modelo preentrenado
                   </p>
                   {selectedModel === "default" && (
-                    <Check className="h-4 w-4" strokeWidth="2.5"/>
+                      <Check className="h-4 w-4" strokeWidth="2.5"/>
                   )}
                 </div>
 
@@ -174,7 +185,7 @@ export default function DockingResult() {
                     subí tu propio modelo entrenado
                   </p>
                   {selectedModel === "custom" && (
-                    <Check className="h-4 w-4" strokeWidth="2.5"/>
+                      <Check className="h-4 w-4" strokeWidth="2.5"/>
                   )}
                 </div>
               </div>
@@ -221,8 +232,7 @@ export default function DockingResult() {
           )}
         </div>
       </div>
+      {isSubmitting ? <PredictionLoading /> : null}
     </div>
-    {isSubmitting ? <PredictionLoading /> : null}
-    </>
   );
 }

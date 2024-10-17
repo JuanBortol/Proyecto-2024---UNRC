@@ -15,6 +15,7 @@ import secrets
 import os
 import numpy as np
 import tensorflow as tf
+import webbrowser
 
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'reports')
 
 
 default_model_filename = 'mi_modelo.h5'
-default_model_filepath = os.path.join(UPLOAD_FOLDER, 'models', 'default', default_model_filename)
+default_model_filepath = './mi_modelo.h5'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
@@ -365,71 +366,71 @@ def get_user_predictions():
 
 # Docking prediction
 def run_docking(protein_filepath, toxin_filepath):
-    return {
-        'result': True,
-        'docking_score': -1.23456789
-    }
-    # Commented for testing purposes
-    # try:
+
+    try:
         # Initialize Gradio client
-        # client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
-        
-        # # Step 1: Predict pocket using toxin file
-        # result_pocket = client.predict(
-        #     ligand_file=handle_file(toxin_filepath),
-        #     expand_size=10,
-        #     api_name="/get_pocket_by_ligand"
-        # )
-        
-        # # Step 2: Perform docking prediction with receptor and toxin files
-        # result_docking = client.predict(
-        #     receptor_pdb=handle_file(protein_filepath),
-        #     ligand_sdf=handle_file(toxin_filepath),
-        #     center_x=result_pocket[0],
-        #     center_y=result_pocket[1],
-        #     center_z=result_pocket[2],
-        #     size_x=result_pocket[3],
-        #     size_y=result_pocket[4],
-        #     size_z=result_pocket[5],
-        #     model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
-        #     use_unidock=True,
-        #     task_name="Hello!!",
-        #     api_name="/_unimol_docking_wrapper"
-        # )
+        webbrowser.open(
+            'https://bohrium.dp.tech/apps/unimoldockingv2/job?type=app'
+        )
 
-        # # Extract docking information
-        # a, b, c, d = result_docking
-        
-        # try:
-        #     file_path = b['value']
-        # except (TypeError, KeyError):
-        #     # No docking
-        #     return {
-        #         'result': False,
-        #         'docking_score': None
-        #     }
+        client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
 
-    #     # Ensure the docking file exists
-    #     if not os.path.exists(file_path):
-    #         return {'error': 'Docking file not found'}
+        # Step 1: Predict pocket using toxin file
+        result_pocket = client.predict(
+            ligand_file=handle_file(toxin_filepath),
+            expand_size=10,
+            api_name="/get_pocket_by_ligand"
+        )
 
-    #     # Extract docking score from the file
-    #     with open(file_path, 'r') as file:
-    #         for line in file:
-    #             if line.startswith(">  <docking_score>"):
-    #                 # Docking can be performed
-    #                 docking_score = file.readline().strip()
-    #                 return {
-    #                     'result': True,
-    #                     'docking_score': docking_score
-    #                 }
-    # except Exception as e:
-    #     return {
-    #         'error': str(e)
-    #     }
+        # Step 2: Perform docking prediction with receptor and toxin files
+        result_docking = client.predict(
+            receptor_pdb=handle_file(protein_filepath),
+            ligand_sdf=handle_file(toxin_filepath),
+            center_x=result_pocket[0],
+            center_y=result_pocket[1],
+            center_z=result_pocket[2],
+            size_x=result_pocket[3],
+            size_y=result_pocket[4],
+            size_z=result_pocket[5],
+            model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
+            use_unidock=True,
+            task_name="Hello!!",
+            api_name="/_unimol_docking_wrapper"
+        )
+
+        # Extract docking information
+        a, b, c, d = result_docking
+
+        try:
+            file_path = b['value']
+        except (TypeError, KeyError):
+            # No docking
+            return {
+                'result': False,
+                'docking_score': None
+            }
+
+        # Ensure the docking file exists
+        if not os.path.exists(file_path):
+            return {'error': 'Docking file not found'}
+
+        # Extract docking score from the file
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.startswith(">  <docking_score>"):
+                    # Docking can be performed
+                    docking_score = file.readline().strip()
+                    return {
+                        'result': True,
+                        'docking_score': docking_score
+                    }
+    except Exception as e:
+        return {
+            'error': str(e)
+        }
 
 
-def run_predict_degradation(protein_filepath, model_filepath):
+def run_predict_degradation(protein_filepath, model_file):
     def pdb_to_numeric_padded(pdb_files, max_len=1000):
         sequences = []
         for pdb_file in pdb_files:
@@ -470,7 +471,8 @@ def run_predict_degradation(protein_filepath, model_filepath):
         # Retornar el valor de la predicción
         return prediction[0][0]
 
-    model = tf.keras.models.load_model(model_filepath)
+
+    model = tf.keras.models.load_model(model_file)
 
     prediction_score = predict_protein(protein_filepath, model)
 
