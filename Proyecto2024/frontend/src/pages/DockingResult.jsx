@@ -84,8 +84,8 @@ export default function DockingResult() {
     }
   };
 
-
   return (
+    <>
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
       ${darkMode ? 'bg-black' : (docking ? styles.bgGreenGradient : styles.bgRedGradient)}`}>
       <Navbar />
@@ -232,7 +232,8 @@ export default function DockingResult() {
           )}
         </div>
       </div>
-      {isSubmitting ? <PredictionLoading /> : null}
     </div>
+    {isSubmitting ? <PredictionLoading /> : null}
+    </>
   );
 }
