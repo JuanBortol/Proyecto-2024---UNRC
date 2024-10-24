@@ -15,7 +15,6 @@ import secrets
 import os
 import numpy as np
 import tensorflow as tf
-import webbrowser
 
 
 app = Flask(__name__)
@@ -368,12 +367,8 @@ def get_user_predictions():
 def run_docking(protein_filepath, toxin_filepath):
 
     try:
-        # Initialize Gradio client
-        webbrowser.open(
-            'https://bohrium.dp.tech/apps/unimoldockingv2/job?type=app'
-        )
 
-        client = Client("https://f57a2f557b098c43f11ab969efe1504b.app-space.dplink.cc/")
+        client = Client("https://e56b06c51e1049195d7b26d043c478a0.app-space.dplink.cc/")
 
         # Step 1: Predict pocket using toxin file
         result_pocket = client.predict(
