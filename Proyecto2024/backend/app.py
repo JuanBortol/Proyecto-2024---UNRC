@@ -222,32 +222,30 @@ def submit_model():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route("/register", methods=['GET', 'POST'])
+@app.route("/register", methods=['POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
 
-        # Validaciones simples
         if not username or not password:
-            flash('Todos los campos son obligatorios')
+            return jsonify({"message": "Todos los campos son obligatorios"}), 400
         elif password != confirm_password:
-            flash('Las contraseñas no coinciden')
+            return jsonify({"message": "Las contraseñas no coinciden"}), 400
         else:
-            # Verificar si el usuario ya existe
+            # User already exists?
             existing_user = db_session.query(User).filter_by(username=username).first()
             if existing_user:
-                flash('El usuario ya existe')
+                return jsonify({"message": "El usuario ya existe"}), 400
             else:
-                # Registrar usuario
                 nuevo_usuario = User(username=username, password=password)
                 db_session.add(nuevo_usuario)
                 db_session.commit()
-                flash('Usuario registrado con éxito')
-                return redirect(url_for('login'))
+                return jsonify({"message": "Usuario registrado con éxito"}), 200
 
-    return render_template('register.html')
+    return jsonify({"message": "Método no permitido"}), 405
 
 @app.route("/login", methods=['POST'])
 def login():
