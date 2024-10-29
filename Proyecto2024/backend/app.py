@@ -130,7 +130,7 @@ def submit_files():
         # DOCKING
         docking_result = run_docking(protein_filepath, toxin_filepath)
 
-        if docking_result.get('result') != None:
+        if docking_result.get('docking_result') != None:
             # Save prediction
             prediction = Prediction(
                 user_id=user_id,
@@ -138,7 +138,7 @@ def submit_files():
                 protein_filepath=protein_filepath,
                 toxin_filename=toxin_filename,
                 toxin_filepath=toxin_filepath,
-                result=docking_result['result'],
+                docking_result=docking_result['docking_result'],
                 docking_score=docking_result['docking_score']
             )
             db_session.add(prediction)
@@ -150,7 +150,7 @@ def submit_files():
 
             return jsonify({
                 'message': 'Files submitted and saved successfully',
-                'result': docking_result['result'],
+                'docking_result': docking_result['docking_result'],
                 'docking_score': docking_result['docking_score'],
                 'protein': protein_filename,
                 'toxin': toxin_filename,
@@ -210,15 +210,23 @@ def submit_model():
 
     try:
         degradation_result = run_predict_degradation(protein_filepath, model_filepath)
+        degradation_score = float(degradation_result)
 
-        d_r = float(degradation_result)
+        degrades = degradation_score > 0.7 and degradation_score < 1.30
+
+        # Update degradation result and score IN DATABASE
+        prediction.degradation_result = degrades
+        prediction.degradation_score = degradation_score
+        db_session.commit()
 
         return jsonify({
             'message': 'Predicción de degradación completada',
-            'degradation_result': d_r
+            'degradation_result': degrades,
+            'degradation_score': degradation_score
         }), 200
 
     except Exception as e:
+        db_session.rollback()
         return jsonify({'error': str(e)}), 500
 
 
@@ -354,8 +362,10 @@ def get_user_predictions():
             'date': prediction.date.strftime('%d/%m/%y'),
             'protein_filename': prediction.protein_filename,
             'toxin_filename': prediction.toxin_filename,
-            'result': prediction.result,
-            'docking_score': prediction.docking_score
+            'docking_result': prediction.docking_result,
+            'docking_score': prediction.docking_score,
+            'degradation_result': prediction.degradation_result,
+            'degradation_score': prediction.degradation_score
         }
         for prediction in predictions
     ]
@@ -414,7 +424,7 @@ def run_docking(protein_filepath, toxin_filepath):
                     # Docking can be performed
                     docking_score = file.readline().strip()
                     return {
-                        'result': True,
+                        'docking_result': True,
                         'docking_score': docking_score
                     }
     except Exception as e:

@@ -17,8 +17,8 @@ export default function DegradationResult() {
      }
   }, [navigate, results]);
 
-  console.log(results);
-  let degrades = results.degradation_result > 0.70 && results.degradation_result < 1.30
+  const degrades = results.degradation_result
+  const score = results.degradation_score
 
   return (
     <div className={`flex flex-col items-center justify-center text-white min-h-screen space-y-32 
@@ -41,7 +41,7 @@ export default function DegradationResult() {
               <br/>
               <br/>
               <strong>
-                  Score: {results.degradation_result}
+                  Score: {score}
               </strong>
           </p>
         </div>

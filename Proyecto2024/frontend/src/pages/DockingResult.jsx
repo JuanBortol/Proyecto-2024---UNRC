@@ -37,7 +37,7 @@ export default function DockingResult() {
     setFileName(file ? file.name : null);
   };
 
-  const docking = results.result;
+  const docking = results.docking_result;
 
   const handleSubmit = async () => {
     if (selectedModel === "custom" && !fileName) {
@@ -76,8 +76,8 @@ export default function DockingResult() {
         navigate('/degradation_result', { state: { results: response.data } });
       }
     } catch (error) {
-      console.error('Error en la solicitud:', error);
-      alert(`ERROR: ${error.response ? error.response.data : error.message}`);
+      console.error('Error en la solicitud:', error.response);
+      alert(`ERROR: ${error.response ? error.response.data.error : error.message}`);
       navigate('/');
     } finally {
       setIsSubmitting(false);

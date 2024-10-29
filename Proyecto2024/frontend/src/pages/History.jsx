@@ -16,7 +16,7 @@ export default function History() {
     httpClient.get('http://localhost:5000/predictions')
       .then((res) => {
         setPredictions(res.data.reverse());
-        setLoading(false)
+        setLoading(false);
       })
       .catch((error) => {
         console.error('Error fetching predictions:', error);
@@ -33,7 +33,7 @@ export default function History() {
       <div className={`flex items-center justify-center text-white min-h-screen px-4
       ${darkMode ? 'bg-black' : styles.bgGreenGradient}`}>
         <Navbar />
-        <div className='container min-h-full my-24 space-y-24 md:space-y-48 mx-4'>
+        <div className="container min-h-full my-24 space-y-24 md:space-y-48 mx-4">
           <h1 className="text-center text-7xl font-extrabold">historial</h1>
           <div>
             <div className="flex justify-between w-full font-extralight text-lg text-white py-2">
@@ -53,34 +53,91 @@ export default function History() {
               </div>
               <p>página {page} de {(predictions.length > 1) ? Math.ceil(predictions.length / itemsPerPage) : 1}</p>
             </div>
-            <table className="w-full text-center text-white rounded-md overflow-hidden">
-            <thead className="bg-opacity-20 bg-white">
-                <tr className="text-lg">
-                  <th className="px-4 py-2 font-light">fecha</th>
-                  <th className="px-4 py-2 font-light chain-col">proteina</th>
-                  <th className="px-4 py-2 font-light model-col">toxina</th>
-                  <th className="px-4 py-2 font-light">docking</th>
-                  <th className="px-4 py-2 font-light">docking score</th>
-                </tr>
-              </thead>
-              <tbody>
+            <div className="overflow-x-auto">
+              <table className="w-full text-center text-white rounded-md overflow-hidden hidden md:table">
+                <thead className="bg-opacity-20 bg-white">
+                  <tr className="text-lg">
+                    <th className="px-4 py-2 font-light">fecha</th>
+                    <th className="px-4 py-2 font-light">proteina</th>
+                    <th className="px-4 py-2 font-light">toxina</th>
+                    <th className="px-4 py-2 font-light">docking</th>
+                    <th className="px-4 py-2 font-light">docking score</th>
+                    <th className="px-4 py-2 font-light">degradación</th>
+                    <th className="px-4 py-2 font-light">degradación score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedPredictions.length > 0 ? (
+                    selectedPredictions.map((prediction, index) => (
+                      <tr key={index} className="bg-opacity-15 bg-white">
+                        <td className="px-4 py-4">{prediction.date}</td>
+                        <td className="px-4 py-4">{prediction.protein_filename.substr(0, prediction.protein_filename.lastIndexOf('.'))}</td>
+                        <td className="px-4 py-4">{prediction.toxin_filename.substr(0, prediction.toxin_filename.lastIndexOf('.'))}</td>
+                        <td className="px-4 py-4">{prediction.docking_result ? '✔': 'X'}</td>
+                        <td className="px-4 py-4 font-extrabold">{prediction.docking_score ? prediction.docking_score.toFixed(4) : '-'}</td>
+                        <td className="px-4 py-4">{
+                        prediction.degradation_result != null ? 
+                          (prediction.degradation_result ? '✔': 'X') : 
+                          '-'
+                        }</td>
+                        <td className="px-4 py-4 font-extrabold">{prediction.degradation_score ? prediction.degradation_score.toFixed(4) : '-'}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="px-4 py-8 font-extralight">no se encuentran registros</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Small screens */}
+              <div className="md:hidden space-y-6">
                 {selectedPredictions.length > 0 ? (
                   selectedPredictions.map((prediction, index) => (
-                    <tr key={index} className="bg-opacity-15 bg-white">
-                      <td className="px-4 py-4">{prediction.date}</td>
-                      <td className={`px-4 py-4 ${styles.proteinCol}`}>{prediction.protein_filename}</td>
-                      <td className={`px-4 py-4 ${styles.toxinCol}`}>{prediction.toxin_filename}</td>
-                      <td className="px-4 py-4">{prediction.result ? 'Sí' : 'No'}</td>
-                      <td className="px-4 py-4 font-extrabold">{prediction.docking_score ? prediction.docking_score : '-'}</td>
-                    </tr>
+                    <div key={index} className="bg-opacity-15 bg-white rounded-md p-4 text-center text-white pl-8">
+                      <p className='font-extralight'>{prediction.date}</p>
+                      <p>proteína:
+                        <span className="font-thin pl-2">
+                        {prediction.protein_filename.substr(0, prediction.protein_filename.lastIndexOf('.'))}
+                        </span> 
+                      </p>
+                      <p>toxina:
+                        <span className="font-thin pl-2">
+                        {prediction.toxin_filename.substr(0, prediction.toxin_filename.lastIndexOf('.'))}
+                        </span> 
+                      </p>
+                      <p>docking:
+                        <span className="font-thin pl-2">
+                        {prediction.docking_result ? '✔': 'X'}
+                        </span> 
+                      </p>
+                      <p>docking score:
+                        <span className="font-thin pl-2">
+                        {prediction.docking_score ? prediction.docking_score.toFixed(4) : '-'}
+                        </span> 
+                      </p>
+                      <p>degradación:
+                        <span className="font-thin pl-2">
+                        {
+                        prediction.degradation_result != null ? 
+                          (prediction.degradation_result ? '✔': 'X') : 
+                          '-'
+                        }
+                        </span> 
+                      </p>
+                      <p>degradación score:
+                        <span className="font-thin pl-2">
+                        {prediction.degradation_score ? prediction.degradation_score.toFixed(4) : '-'}
+                        </span> 
+                      </p>
+                    </div>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-8 font-extralight">no se encuentran registros</td>
-                  </tr>
+                  <p className="px-4 py-8 font-extralight">no se encuentran registros</p>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
