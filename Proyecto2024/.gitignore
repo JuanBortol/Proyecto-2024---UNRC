@@ -34,3 +34,37 @@ __pycache__
 # Files uploaded
 uploads
 reports
+
+
+# Entorno virtual de Python
+venv/
+env/
+.venv/
+.env/
+
+# Archivos de configuración de entorno
+*.env
+*.env.*
+
+# Archivos de compilación
+__pycache__/
+*.py[cod]
+*.so
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Archivos de Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs y bases de datos temporales
+*.log
+*.sqlite3
+*.db
+
