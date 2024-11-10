@@ -1,4 +1,5 @@
 import unittest
+from io import BytesIO
 from flask import session
 from app import app, db_session, Prediction, User
 
@@ -13,6 +14,7 @@ class TestDockingPredictions(unittest.TestCase):
         db_session.add(self.test_user)
         db_session.commit()
 
+        # Iniciar sesión en el contexto de la prueba
         with self.app.session_transaction() as sess:
             sess['user_id'] = self.test_user.id
 
@@ -23,24 +25,26 @@ class TestDockingPredictions(unittest.TestCase):
         db_session.commit()
 
     def test_upload_and_submit_files(self):
-        # Testear la subida de archivos
-        with open('test_protein.pdb', 'rb') as protein_file, open('test_toxin.sdf', 'rb') as toxin_file:
-            response = self.app.post('/upload', data={
-                'file': protein_file,
-                'type': 'protein'
-            })
-            self.assertEqual(response.status_code, 200)
+        # Testear la subida de archivos con datos de ejemplo en memoria
+        protein_data = BytesIO(b"Test protein data")
+        toxin_data = BytesIO(b"Test toxin data")
 
-            response = self.app.post('/upload', data={
-                'file': toxin_file,
-                'type': 'toxin'
-            })
-            self.assertEqual(response.status_code, 200)
+        response = self.app.post('/upload', data={
+            'file': (protein_data, 'test_protein.pdb'),
+            'type': 'protein'
+        })
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.post('/upload', data={
+            'file': (toxin_data, 'test_toxin.sdf'),
+            'type': 'toxin'
+        })
+        self.assertEqual(response.status_code, 200)
 
         # Testear la ruta de submit
         response = self.app.post('/submit', data={
-            'protein_file': open('test_protein.pdb', 'rb'),
-            'toxin_file': open('test_toxin.sdf', 'rb')
+            'protein_file': (BytesIO(b"Test protein data"), 'test_protein.pdb'),
+            'toxin_file': (BytesIO(b"Test toxin data"), 'test_toxin.sdf')
         })
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Files submitted and saved successfully', response.data)
@@ -48,11 +52,12 @@ class TestDockingPredictions(unittest.TestCase):
     def test_docking_prediction(self):
         # Crear archivos de prueba y simular predicción de docking
         response = self.app.post('/submit', data={
-            'protein_file': open('test_protein.pdb', 'rb'),
-            'toxin_file': open('test_toxin.sdf', 'rb')
+            'protein_file': (BytesIO(b"Test protein data"), 'test_protein.pdb'),
+            'toxin_file': (BytesIO(b"Test toxin data"), 'test_toxin.sdf')
         })
         self.assertEqual(response.status_code, 200)
 
+        # Verificar los resultados de la predicción
         data = response.get_json()
         self.assertIn('result', data)
         self.assertIn('docking_score', data)
