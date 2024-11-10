@@ -1,9 +1,27 @@
-from flask import request, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+#from flask import app, request, session, jsonify
+from werkzeug.utils import secure_filename
+from models.report import Report
 from database import db_session
 from models.user import User
 from models.prediction import Prediction
 from datetime import datetime
+from gradio_client import Client, handle_file
 import os
+
+app = Flask(__name__)
+#CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
+#app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
+
+# Set the upload folder
+UPLOAD_FOLDER = 'uploads/'
+REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'reports')
+
+
+default_model_filename = 'mi_modelo.h5'
+default_model_filepath = './mi_modelo.h5'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['REPORT_FOLDER'] = REPORT_FOLDER
 
 def submit_files():
     if 'user_id' not in session:
@@ -176,3 +194,64 @@ def get_user_predictions():
         for prediction in predictions
     ]
     return jsonify(predictions_data), 200
+
+# Docking prediction
+def run_docking(protein_filepath, toxin_filepath):
+
+    try:
+
+        client = Client("https://e56b06c51e1049195d7b26d043c478a0.app-space.dplink.cc/")
+
+        # Step 1: Predict pocket using toxin file
+        result_pocket = client.predict(
+            ligand_file=handle_file(toxin_filepath),
+            expand_size=10,
+            api_name="/get_pocket_by_ligand"
+        )
+
+        # Step 2: Perform docking prediction with receptor and toxin files
+        result_docking = client.predict(
+            receptor_pdb=handle_file(protein_filepath),
+            ligand_sdf=handle_file(toxin_filepath),
+            center_x=result_pocket[0],
+            center_y=result_pocket[1],
+            center_z=result_pocket[2],
+            size_x=result_pocket[3],
+            size_y=result_pocket[4],
+            size_z=result_pocket[5],
+            model_version="Pocket Augmentated (Model which is more robust when the pocket is not well defined.)",
+            use_unidock=True,
+            task_name="Hello!!",
+            api_name="/_unimol_docking_wrapper"
+        )
+
+        # Extract docking information
+        a, b, c, d = result_docking
+
+        try:
+            file_path = b['value']
+        except (TypeError, KeyError):
+            # No docking
+            return {
+                'result': False,
+                'docking_score': None
+            }
+
+        # Ensure the docking file exists
+        if not os.path.exists(file_path):
+            return {'error': 'Docking file not found'}
+
+        # Extract docking score from the file
+        with open(file_path, 'r') as file:
+            for line in file:
+                if line.startswith(">  <docking_score>"):
+                    # Docking can be performed
+                    docking_score = file.readline().strip()
+                    return {
+                        'docking_result': True,
+                        'docking_score': docking_score
+                    }
+    except Exception as e:
+        return {
+            'error': str(e)
+        }
