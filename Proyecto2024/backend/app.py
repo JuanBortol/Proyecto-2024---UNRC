@@ -20,6 +20,7 @@ import tensorflow as tf
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
+PORT = int(os.environ.get("PORT", 5000))
 
 # Crear las tablas si no existen
 Base.metadata.create_all(engine)
@@ -483,4 +484,5 @@ def run_predict_degradation(protein_filepath, model_file):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=PORT)
+
