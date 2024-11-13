@@ -43,6 +43,11 @@ if not os.path.exists(UPLOAD_FOLDER):
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/<path:path>', methods=['GET'])
+def catch_all(path):
+    # rewrite all requests from "/*" to "/index.html"
+    return app.send_static_file('index.html')
+
 # Returns current user for AppContext no borrar pls
 @app.route('/@me', methods=['GET'])
 def get_current_user():
