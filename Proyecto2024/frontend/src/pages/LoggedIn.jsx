@@ -35,7 +35,7 @@ export default function LoggedIn() {
       formData.append('type', 'protein');
 
       try {
-        const response = await httpClient.post('http://localhost:5000/upload', formData);
+        const response = await httpClient.post('/upload', formData);
         if (response.status === 200) {
           console.log("Archivo de proteína seleccionado con éxito.");
         } else {
@@ -62,7 +62,7 @@ export default function LoggedIn() {
       formData.append('type', 'toxin');
 
       try {
-        const response = await httpClient.post('http://localhost:5000/upload', formData);
+        const response = await httpClient.post('/upload', formData);
         if (response.status === 200) {
           console.log("Archivo de toxina seleccionado con éxito.");
         } else {
@@ -89,7 +89,7 @@ export default function LoggedIn() {
     if (toxinFile) formData.append('toxin_file', toxinFile);
 
     try {
-      const response = await httpClient.post('http://localhost:5000/submit', formData);
+      const response = await httpClient.post('/submit', formData);
       console.log(response.status)
       if (response.status === 200) {
         console.log('Submission successful');

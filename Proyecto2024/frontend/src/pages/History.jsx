@@ -13,7 +13,7 @@ export default function History() {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    httpClient.get('http://localhost:5000/predictions')
+    httpClient.get('/predictions')
       .then((res) => {
         setPredictions(res.data.reverse());
         setLoading(false);

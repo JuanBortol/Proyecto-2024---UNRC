@@ -65,7 +65,7 @@ export default function DockingResult() {
     formData.append('prediction_id', results.prediction_id);
 
     try {
-      const response = await httpClient.post('http://localhost:5000/submit_model', formData, {
+      const response = await httpClient.post('/submit_model', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
