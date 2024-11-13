@@ -17,10 +17,9 @@ import numpy as np
 import tensorflow as tf
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
-PORT = int(os.environ.get("PORT", 5000))
 
 # Crear las tablas si no existen
 Base.metadata.create_all(engine)
@@ -38,6 +37,11 @@ app.config['REPORT_FOLDER'] = REPORT_FOLDER
 # Create the folder if it doesn't exist
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
 
 # Returns current user for AppContext no borrar pls
 @app.route('/@me', methods=['GET'])
@@ -481,8 +485,3 @@ def run_predict_degradation(protein_filepath, model_file):
     prediction_score = predict_protein(protein_filepath, model)
 
     return prediction_score
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT)
-
