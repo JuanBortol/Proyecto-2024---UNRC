@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 
 
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
+app = Flask(__name__, static_folder='../frontend/dist', static_url_path='/')
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
 
