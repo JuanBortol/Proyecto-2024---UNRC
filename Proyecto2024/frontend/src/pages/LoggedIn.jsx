@@ -96,8 +96,7 @@ export default function LoggedIn() {
         console.log('Submission successful');
         const { docking_result, docking_score, protein_filepath, toxin_filepath } = response.data;
   
-        const createPredictionResponse = await httpClient.post(
-          `${API_URL}/predictions`,
+        const createPredictionResponse = await httpClient.post('/predictions',
           {
             protein_filename: proteinFilename,
             protein_filepath,
@@ -108,7 +107,7 @@ export default function LoggedIn() {
           }
         );
   
-        if (createPredictionResponse.status === 200) {
+        if (createPredictionResponse.status === 201) {
           console.log('Prediction entry created successfully');
           navigate('/docking_result', { state: { results: response.data } });
         }

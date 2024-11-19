@@ -78,8 +78,7 @@ export default function DockingResult() {
         console.log('Model submission successful');
         const { degradation_result, degradation_score } = response.data;
   
-        const updatePredictionResponse = await httpClient.put(
-          `${API_URL}/predictions`,
+        const updatePredictionResponse = await httpClient.put('/predictions',
           {
             degradation_result,
             degradation_score
