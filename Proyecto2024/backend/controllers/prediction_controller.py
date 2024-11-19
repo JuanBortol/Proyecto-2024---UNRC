@@ -34,96 +34,122 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["REPORT_FOLDER"] = REPORT_FOLDER
 
 
-def submit_files():
-    if "user_id" not in session:
-        return jsonify({"error": "User not logged in"}), 401
+def validate_session_and_user():
+    """Validate if user is logged in and exists."""
+    if 'user_id' not in session:
+        return {'error': 'User not logged in'}, 401
 
-    user_id = session["user_id"]
+    user_id = session['user_id']
     user = db_session.query(User).filter_by(id=user_id).first()
 
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return {'error': 'User not found'}, 404
 
-    # Get file names from session
-    protein_filename = session.get("protein_filename")
-    toxin_filename = session.get("toxin_filename")
+    return {'user_id': user_id}
+
+
+def validate_files_in_session():
+    """Validate if file names are available in session."""
+    protein_filename = session.get('protein_filename')
+    toxin_filename = session.get('toxin_filename')
 
     if not protein_filename or not toxin_filename:
-        return jsonify({"error": "Both files must be uploaded"}), 400
+        return {'error': 'Both files must be uploaded'}, 400
 
-    # Retrieve files from the request
-    protein_file = request.files.get("protein_file")
-    toxin_file = request.files.get("toxin_file")
+    return {'protein_filename': protein_filename, 'toxin_filename': toxin_filename}
 
-    if not protein_file or not toxin_file:
-        return jsonify({"error": "Files are missing"}), 400
 
+def save_files(protein_file, toxin_file, protein_filename, toxin_filename, user_id):
+    """Save uploaded files and return their paths."""
+    current_date = datetime.utcnow().strftime("%Y_%m_%d")
+    timestamp = datetime.utcnow().strftime("%H%M%S")
+    protein_name = os.path.splitext(protein_filename)[0]
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'predictions', f'user_{user_id}', current_date)
+    prediction_folder = os.path.join(user_folder, f'{protein_name}_{timestamp}')
+    os.makedirs(prediction_folder, exist_ok=True)
+
+    protein_filepath = os.path.join(prediction_folder, protein_filename)
+    toxin_filepath = os.path.join(prediction_folder, toxin_filename)
+
+    protein_file.save(protein_filepath)
+    toxin_file.save(toxin_filepath)
+
+    return protein_filepath, toxin_filepath
+
+
+def process_docking_and_save(protein_filepath, toxin_filepath, protein_filename, toxin_filename, user_id):
+    """Run docking, save results to DB, and clear session."""
+    docking_result = run_docking(protein_filepath, toxin_filepath)
+
+    if docking_result.get('docking_result') is None:
+        return {'error': docking_result.get('error')}, 400
+
+    prediction = Prediction(
+        user_id=user_id,
+        protein_filename=protein_filename,
+        protein_filepath=protein_filepath,
+        toxin_filename=toxin_filename,
+        toxin_filepath=toxin_filepath,
+        docking_result=docking_result['docking_result'],
+        docking_score=docking_result['docking_score']
+    )
+    db_session.add(prediction)
+    db_session.commit()
+
+    session.pop('protein_filename', None)
+    session.pop('toxin_filename', None)
+
+    return {
+        'message': 'Files submitted and saved successfully',
+        'docking_result': docking_result['docking_result'],
+        'docking_score': docking_result['docking_score'],
+        'protein': protein_filename,
+        'toxin': toxin_filename,
+        'prediction_id': prediction.id
+    }, 200
+
+
+def submit_files():
     try:
-        # Set up the folder path
-        current_date = datetime.utcnow().strftime("%Y_%m_%d")
-        timestamp = datetime.utcnow().strftime("%H%M%S")
-        protein_name = os.path.splitext(protein_filename)[0]  # Get rid of extension
+        # Validate user session and existence
+        validation_result = validate_session_and_user()
+        if 'error' in validation_result:
+            return jsonify(validation_result), validation_result.get('status', 401)
 
-        # path: uploads/predictions/user_{user_id}/YYYY_MM_DD/{protein_name}_{timestamp}
-        user_folder = os.path.join(
-            app.config["UPLOAD_FOLDER"], "predictions", f"user_{user_id}", current_date
+        user_id = validation_result['user_id']
+
+        # Validate file names in session
+        session_files = validate_files_in_session()
+        if 'error' in session_files:
+            return jsonify(session_files), session_files.get('status', 400)
+
+        protein_filename = session_files['protein_filename']
+        toxin_filename = session_files['toxin_filename']
+
+        # Validate uploaded files
+        protein_file = request.files.get('protein_file')
+        toxin_file = request.files.get('toxin_file')
+
+        if not protein_file or not toxin_file:
+            return jsonify({'error': 'Files are missing'}), 400
+
+        # Save files
+        protein_filepath, toxin_filepath = save_files(
+            protein_file, toxin_file, protein_filename, toxin_filename, user_id
         )
-        prediction_folder = os.path.join(user_folder, f"{protein_name}_{timestamp}")
 
-        # Create the directories if they don't exist
-        os.makedirs(prediction_folder, exist_ok=True)
+        # Process docking and save prediction
+        response, status_code = process_docking_and_save(
+            protein_filepath, toxin_filepath, protein_filename, toxin_filename, user_id
+        )
 
-        # File paths
-        protein_filepath = os.path.join(prediction_folder, protein_filename)
-        toxin_filepath = os.path.join(prediction_folder, toxin_filename)
+        return jsonify(response), status_code
 
-        # Save the files
-        protein_file.save(protein_filepath)
-        toxin_file.save(toxin_filepath)
-
-        # Files exist?
-        if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
-            return jsonify({"error": "Files not found on the server"}), 404
-
-        # DOCKING
-        docking_result = run_docking(protein_filepath, toxin_filepath)
-
-        if docking_result.get("docking_result") != None:
-            # Save prediction
-            prediction = Prediction(
-                user_id=user_id,
-                protein_filename=protein_filename,
-                protein_filepath=protein_filepath,
-                toxin_filename=toxin_filename,
-                toxin_filepath=toxin_filepath,
-                docking_result=docking_result["docking_result"],
-                docking_score=docking_result["docking_score"],
-            )
-            db_session.add(prediction)
-            db_session.commit()
-
-            # Clear session filenames
-            session.pop("protein_filename", None)
-            session.pop("toxin_filename", None)
-
-            return (
-                jsonify(
-                    {
-                        "message": "Files submitted and saved successfully",
-                        "docking_result": docking_result["docking_result"],
-                        "docking_score": docking_result["docking_score"],
-                        "protein": protein_filename,
-                        "toxin": toxin_filename,
-                        "prediction_id": prediction.id,
-                    }
-                ),
-                200,
-            )
-        else:
-            return jsonify({"error": docking_result.get("error")}), 400
     except Exception as e:
         db_session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
+
 
 
 def submit_report():
