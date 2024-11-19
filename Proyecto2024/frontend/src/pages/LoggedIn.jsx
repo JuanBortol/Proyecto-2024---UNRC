@@ -19,6 +19,7 @@ export default function LoggedIn() {
   const [proteinFilename, setProteinFilename] = useState(null);
   const [toxinFilename, setToxinFilename] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const PREDICT_SERVICE_URL = import.meta.env.VITE_PREDICT_SERVICE_URL;
 
   const handleFileProteinUpload = async (event) => {
     const file = event.target.files[0];
@@ -35,7 +36,7 @@ export default function LoggedIn() {
       formData.append('type', 'protein');
 
       try {
-        const response = await httpClient.post('/upload', formData);
+        const response = await httpClient.post(`${PREDICT_SERVICE_URL}/upload`, formData);
         if (response.status === 200) {
           console.log("Archivo de proteína seleccionado con éxito.");
         } else {
@@ -62,7 +63,7 @@ export default function LoggedIn() {
       formData.append('type', 'toxin');
 
       try {
-        const response = await httpClient.post('/upload', formData);
+        const response = await httpClient.post(`${PREDICT_SERVICE_URL}/upload`, formData);
         if (response.status === 200) {
           console.log("Archivo de toxina seleccionado con éxito.");
         } else {
@@ -89,7 +90,7 @@ export default function LoggedIn() {
     if (toxinFile) formData.append('toxin_file', toxinFile);
 
     try {
-      const response = await httpClient.post('/submit', formData);
+      const response = await httpClient.post(`${PREDICT_SERVICE_URL}/submit`, formData);
       console.log(response.status)
       if (response.status === 200) {
         console.log('Submission successful');

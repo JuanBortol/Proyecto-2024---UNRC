@@ -12,6 +12,7 @@ export default function DockingResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const results = location.state?.results;
+  const PREDICT_SERVICE_URL = import.meta.env.VITE_PREDICT_SERVICE_URL;
 
   // State for model selection
   const [selectedModel, setSelectedModel] = useState("default"); // "default" or "custom"
@@ -46,26 +47,29 @@ export default function DockingResult() {
       return;
     }
 
-    if (!results.prediction_id) {
-      console.error('No se ha encontrado un ID de predicción válido.');
-      alert('Error: No hay una predicción válida.');
-      return;
-    }
+    // if (!results.prediction_id) {
+    //   console.error('No se ha encontrado un ID de predicción válido.');
+    //   alert('Error: No hay una predicción válida.');
+    //   return;
+    // }
 
     setIsSubmitting(true);
 
     const formData = new FormData();
 
     if (selectedModel === "default") {
-      formData.append('mi_modelo.h5', 'default');
+      formData.append('model_file', 'mi_modelo.h5');
     } else if (selectedModel === "custom" && fileInputModelRef.current.files[0]) {
       formData.append('model_file', fileInputModelRef.current.files[0]);
     }
 
-    formData.append('prediction_id', results.prediction_id);
+    // formData.append('prediction_id', results.prediction_id);
+
+    formData.append('protein_filepath', results.protein_filepath)
+    formData.append('toxin_filepath', results.toxin_filepath)
 
     try {
-      const response = await httpClient.post('/submit_model', formData, {
+      const response = await httpClient.post(`${PREDICT_SERVICE_URL}/submit_model`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
