@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_cors import CORS
-from werkzeug.utils import secure_filename
+
 from database import db_session, Base, engine  # Importar db_session y Base desde database.py
 from gradio_client import Client, handle_file
 from models.user import User
@@ -14,10 +14,10 @@ import secrets
 import os
 import numpy as np
 import tensorflow as tf
-from controllers.user_controller import register, login, logout
+from controllers.user_controller import register, login, logout, get_current_user
 from controllers.prediction_controller import submit_files, submit_report, get_user_predictions
 from controllers.models_controller import submit_model , run_predict_degradation
-
+from controllers.upload_controller import upload_file
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
@@ -39,43 +39,14 @@ app.config['REPORT_FOLDER'] = REPORT_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Returns current user for AppContext no borrar pls
+# Returns current user for AppContext
 @app.route('/@me', methods=['GET'])
-def get_current_user():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify({"id": None, "username": None})
-    
-    user = db_session.query(User).filter_by(id=user_id).first()
-    if user:
-        return jsonify({
-            "id": user_id,
-            "username": user.username
-        })
-    else:
-        return jsonify({"id": None, "username": None})
+def get_current_user_route()
+    return get_current_user()
 
 @app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'user_id' not in session:
-        return 'User not logged in', 401
-    
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-
-    file = request.files['file']
-    file_type = request.form.get('type')  # 'protein' or 'toxin'
-
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-
-    if file:
-        filename = secure_filename(file.filename)
-
-        # Store filename in session
-        session[f'{file_type}_filename'] = filename
-        return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 200
+def upload_route():
+    return upload_file()
 
 
 @app.route('/submit', methods=['POST'])

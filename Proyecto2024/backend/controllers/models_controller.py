@@ -3,9 +3,9 @@ from flask import  Flask, request, jsonify, session
 from flask_cors import CORS
 import tensorflow as tf
 from models.prediction import Prediction
-from database import db_session  
+from database import db_session
 from models.user import User
-from werkzeug.utils import secure_filename  
+from werkzeug.utils import secure_filename
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from Bio.PDB import PDBParser
@@ -13,7 +13,7 @@ import os
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
-app.secret_key = secrets.token_hex(16) 
+app.secret_key = secrets.token_hex(16)
 
 
 default_model_filename = 'mi_modelo.h5'
@@ -66,7 +66,7 @@ def submit_model():
         model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', model_filename)
         model_file.save(model_filepath)
 
-    # Filepaths for both the protein and toxin    
+    # Filepaths for both the protein and toxin
     protein_filepath = prediction.protein_filepath
     toxin_filepath = prediction.toxin_filepath
 

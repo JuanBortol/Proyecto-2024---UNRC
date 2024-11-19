@@ -41,3 +41,19 @@ def login():
 def logout():
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
+
+
+def get_current_user():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return jsonify({"id": None, "username": None})
+
+    user = db_session.query(User).filter_by(id=user_id).first()
+    if user:
+        return jsonify({
+            "id": user_id,
+            "username": user.username
+        })
+    else:
+        return jsonify({"id": None, "username": None})
