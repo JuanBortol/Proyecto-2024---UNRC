@@ -109,7 +109,14 @@ export default function LoggedIn() {
   
         if (createPredictionResponse.status === 201) {
           console.log('Prediction entry created successfully');
-          navigate('/docking_result', { state: { results: response.data } });
+          navigate('/docking_result', { 
+            state: { 
+              results: { 
+                ...response.data, 
+                createPrediction: createPredictionResponse.data 
+              } 
+            } 
+          });
         }
       }
     } catch (error) {

@@ -47,7 +47,7 @@ export default function DockingResult() {
       return;
     }
 
-    if (!results.prediction_id) {
+    if (!results.createPrediction.prediction_id) {
       console.error('No se ha encontrado un ID de predicción válido.');
       alert('Error: No hay una predicción válida.');
       return;
@@ -63,7 +63,7 @@ export default function DockingResult() {
       formData.append('model_file', fileInputModelRef.current.files[0]);
     }
 
-    formData.append('prediction_id', results.prediction_id);
+    formData.append('prediction_id', results.createPrediction.prediction_id);
     formData.append('protein_filepath', results.protein_filepath)
     formData.append('toxin_filepath', results.toxin_filepath)
 
