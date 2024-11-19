@@ -47,11 +47,11 @@ export default function DockingResult() {
       return;
     }
 
-    // if (!results.prediction_id) {
-    //   console.error('No se ha encontrado un ID de predicción válido.');
-    //   alert('Error: No hay una predicción válida.');
-    //   return;
-    // }
+    if (!results.prediction_id) {
+      console.error('No se ha encontrado un ID de predicción válido.');
+      alert('Error: No hay una predicción válida.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -63,8 +63,7 @@ export default function DockingResult() {
       formData.append('model_file', fileInputModelRef.current.files[0]);
     }
 
-    // formData.append('prediction_id', results.prediction_id);
-
+    formData.append('prediction_id', results.prediction_id);
     formData.append('protein_filepath', results.protein_filepath)
     formData.append('toxin_filepath', results.toxin_filepath)
 
@@ -77,10 +76,23 @@ export default function DockingResult() {
 
       if (response.status === 200) {
         console.log('Model submission successful');
-        navigate('/degradation_result', { state: { results: response.data } });
+        const { degradation_result, degradation_score } = response.data;
+  
+        const updatePredictionResponse = await httpClient.put(
+          `${API_URL}/predictions`,
+          {
+            degradation_result,
+            degradation_score
+          }
+        );
+  
+        if (updatePredictionResponse.status === 200) {
+          console.log('Prediction entry updated successfully');
+          navigate('/degradation_result', { state: { results: response.data } });
+        }
       }
     } catch (error) {
-      console.error('Error en la solicitud:', error.response);
+      console.error('Error during request:', error.response || error.message);
       alert(`ERROR: ${error.response ? error.response.data.error : error.message}`);
       navigate('/');
     } finally {

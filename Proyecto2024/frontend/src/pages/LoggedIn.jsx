@@ -77,34 +77,51 @@ export default function LoggedIn() {
 
   const handleSubmit = async () => {
     if (!proteinFilename || !toxinFilename) {
-      console.error('Ambos archivos deben ser seleccionados.');
+      console.error('Both files must be selected.');
       return;
     }
-
+  
     setIsSubmitting(true);
     const formData = new FormData();
     const proteinFile = fileInputProteinRef.current.files[0];
     const toxinFile = fileInputToxinRef.current.files[0];
-
+  
     if (proteinFile) formData.append('protein_file', proteinFile);
     if (toxinFile) formData.append('toxin_file', toxinFile);
-
+  
     try {
       const response = await httpClient.post(`${PREDICT_SERVICE_URL}/submit`, formData);
-      console.log(response.status)
+  
       if (response.status === 200) {
         console.log('Submission successful');
-        navigate('/docking_result', { state: { results: response.data } });
+        const { docking_result, docking_score, protein_filepath, toxin_filepath } = response.data;
+  
+        const createPredictionResponse = await httpClient.post(
+          `${API_URL}/predictions`,
+          {
+            protein_filename: proteinFilename,
+            protein_filepath,
+            toxin_filename: toxinFilename,
+            toxin_filepath,
+            docking_result,
+            docking_score,
+          }
+        );
+  
+        if (createPredictionResponse.status === 200) {
+          console.log('Prediction entry created successfully');
+          navigate('/docking_result', { state: { results: response.data } });
+        }
       }
     } catch (error) {
-        alert(`ERROR: ${error.response.data.error}`)
-        setProteinFilename(null);
-        setToxinFilename(null);
-        navigate('/'); // to be changed
+      alert(`ERROR: ${error.response?.data?.error || 'An unexpected error occurred.'}`);
+      setProteinFilename(null);
+      setToxinFilename(null);
+      navigate('/'); // to be changed
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-  };
+  };  
 
   const handleProteinButtonClick = () => {
     fileInputProteinRef.current.click();

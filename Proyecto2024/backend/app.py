@@ -7,6 +7,7 @@ from models.report import Report
 from models.prediction import Prediction
 from datetime import datetime
 import secrets
+from sqlalchemy.exc import SQLAlchemyError
 import os
 
 
@@ -201,6 +202,65 @@ def get_user_predictions():
         for prediction in predictions
     ]
     return jsonify(predictions_data), 200
+
+@app.route('/predictions', methods=['POST'])
+def create_prediction():
+    """
+    Creates a new prediction entry after the /submit endpoint is invoked.
+    """
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    try:
+        new_prediction = Prediction(
+            user_id=user_id,
+            protein_filename=data['protein_filename'],
+            protein_filepath=data['protein_filepath'],
+            toxin_filename=data['toxin_filename'],
+            toxin_filepath=data['toxin_filepath'],
+            docking_result=data['docking_result'],
+            docking_score=data.get('docking_score')
+        )
+        db_session.add(new_prediction)
+        db_session.commit()
+
+        return jsonify({'message': 'Prediction created successfully', 'prediction_id': new_prediction.id}), 201
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/predictions', methods=['PUT'])
+def update_prediction(prediction_id):
+    """
+    Updates an existing prediction with degradation results after the /submit_model endpoint is invoked.
+    """
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    prediction = db_session.query(Prediction).filter_by(id=prediction_id, user_id=user_id).first()
+    if not prediction:
+        return jsonify({'error': 'Prediction not found'}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+
+    try:
+        prediction.degradation_result = data.get('degradation_result')
+        prediction.degradation_score = data.get('degradation_score')
+        db_session.commit()
+
+        return jsonify({'message': 'Prediction updated successfully'}), 200
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=4000)
