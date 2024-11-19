@@ -1,5 +1,5 @@
 import secrets
-from flask import  Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import tensorflow as tf
 from models.prediction import Prediction
@@ -12,49 +12,54 @@ from Bio.PDB import PDBParser
 import os
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
+CORS(app, supports_credentials=True)  # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16)
 
 
-default_model_filename = 'mi_modelo.h5'
-default_model_filepath = './mi_modelo.h5'
+default_model_filename = "mi_modelo.h5"
+default_model_filepath = "./mi_modelo.h5"
 
 # Set the upload folder
 UPLOAD_FOLDER = "Proyecto2024/backend/uploads"
 REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, "reports")
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['REPORT_FOLDER'] = REPORT_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["REPORT_FOLDER"] = REPORT_FOLDER
 
 # Create the folder if it doesn't exist
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-def submit_model():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Usuario no logeado'}), 401
 
-    user_id = session['user_id']
+def submit_model():
+    if "user_id" not in session:
+        return jsonify({"error": "Usuario no logeado"}), 401
+
+    user_id = session["user_id"]
     user = db_session.query(User).filter_by(id=user_id).first()
 
     if not user:
-        return jsonify({'error': 'Usuario no encontrado'}), 404
+        return jsonify({"error": "Usuario no encontrado"}), 404
 
     # Get model file and prediction id from request
-    model_file = request.files.get('model_file')
-    prediction_id = request.form.get('prediction_id')
+    model_file = request.files.get("model_file")
+    prediction_id = request.form.get("prediction_id")
 
     if not prediction_id:
-        return jsonify({'error': 'Fallo al proveer ID de Predicción'}), 400
+        return jsonify({"error": "Fallo al proveer ID de Predicción"}), 400
 
     # Retrieve the Prediction object
-    prediction = db_session.query(Prediction).filter_by(id=prediction_id, user_id=session['user_id']).first()
+    prediction = (
+        db_session.query(Prediction)
+        .filter_by(id=prediction_id, user_id=session["user_id"])
+        .first()
+    )
 
     if not prediction:
-        return jsonify({'error': 'No se ha encontrado la predicción'}), 404
+        return jsonify({"error": "No se ha encontrado la predicción"}), 404
 
     # Models folder
-    models_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'models')
+    models_dir = os.path.join(app.config["UPLOAD_FOLDER"], "models")
     if not os.path.exists(models_dir):
         os.makedirs(models_dir)
 
@@ -63,7 +68,9 @@ def submit_model():
         model_filepath = default_model_filepath
     else:
         model_filename = model_file.filename
-        model_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'models', model_filename)
+        model_filepath = os.path.join(
+            app.config["UPLOAD_FOLDER"], "models", model_filename
+        )
         model_file.save(model_filepath)
 
     # Filepaths for both the protein and toxin
@@ -71,7 +78,12 @@ def submit_model():
     toxin_filepath = prediction.toxin_filepath
 
     if not os.path.exists(protein_filepath) or not os.path.exists(toxin_filepath):
-        return jsonify({'error': 'El archivo .pdb o .sdf no se encuentran en el servidor'}), 404
+        return (
+            jsonify(
+                {"error": "El archivo .pdb o .sdf no se encuentran en el servidor"}
+            ),
+            404,
+        )
 
     try:
         degradation_result = run_predict_degradation(protein_filepath, model_filepath)
@@ -84,15 +96,20 @@ def submit_model():
         prediction.degradation_score = degradation_score
         db_session.commit()
 
-        return jsonify({
-            'message': 'Predicción de degradación completada',
-            'degradation_result': degrades,
-            'degradation_score': degradation_score
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": "Predicción de degradación completada",
+                    "degradation_result": degrades,
+                    "degradation_score": degradation_score,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         db_session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 def run_predict_degradation(protein_filepath, model_file):
@@ -103,12 +120,14 @@ def run_predict_degradation(protein_filepath, model_file):
             sequences.append(coords)
 
         # Padeamos las secuencias para que todas tengan el mismo número de átomos, con 3 columnas (x, y, z)
-        padded_sequences = pad_sequences(sequences, maxlen=max_len, padding='post', dtype='float32')
+        padded_sequences = pad_sequences(
+            sequences, maxlen=max_len, padding="post", dtype="float32"
+        )
         return padded_sequences
 
     def pdb_to_numeric(pdb_file):
         parser = PDBParser()
-        structure = parser.get_structure('protein', pdb_file)
+        structure = parser.get_structure("protein", pdb_file)
 
         atom_coords = []
         for model in structure:
@@ -121,7 +140,9 @@ def run_predict_degradation(protein_filepath, model_file):
         atom_coords = np.array(atom_coords)
 
         # Normalizar las coordenadas
-        atom_coords = (atom_coords - np.mean(atom_coords, axis=0)) / np.std(atom_coords, axis=0)
+        atom_coords = (atom_coords - np.mean(atom_coords, axis=0)) / np.std(
+            atom_coords, axis=0
+        )
 
         return atom_coords
 
@@ -135,7 +156,6 @@ def run_predict_degradation(protein_filepath, model_file):
 
         # Retornar el valor de la predicción
         return prediction[0][0]
-
 
     model = tf.keras.models.load_model(model_file)
 

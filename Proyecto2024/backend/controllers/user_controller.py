@@ -2,17 +2,18 @@ from flask import request, jsonify, session
 from database import db_session
 from models.user import User
 
+
 def register():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    confirm_password = data.get('confirm_password')
+    username = data.get("username")
+    password = data.get("password")
+    confirm_password = data.get("confirm_password")
 
     if not username or not password:
         return jsonify({"message": "Todos los campos son obligatorios"}), 400
     elif password != confirm_password:
         return jsonify({"message": "Las contraseñas no coinciden"}), 400
-    
+
     existing_user = db_session.query(User).filter_by(username=username).first()
     if existing_user:
         return jsonify({"message": "El usuario ya existe"}), 400
@@ -22,25 +23,29 @@ def register():
     db_session.commit()
     return jsonify({"message": "Usuario registrado con éxito"}), 200
 
+
 def login():
-    if 'user_id' in session:
-        return jsonify({'message': 'User already logged in'}), 200
-    
+    if "user_id" in session:
+        return jsonify({"message": "User already logged in"}), 200
+
     data = request.get_json()
-    username = data['username']
-    password = data['password']
-    user = db_session.query(User).filter_by(username=username, password=password).first()
+    username = data["username"]
+    password = data["password"]
+    user = (
+        db_session.query(User).filter_by(username=username, password=password).first()
+    )
 
     if not user:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 400
+        return jsonify({"message": "Usuario o contraseña incorrectos"}), 400
 
-    session['user_id'] = user.id
-    session['username'] = user.username
+    session["user_id"] = user.id
+    session["username"] = user.username
     return jsonify({"user_id": user.id, "username": user.username}), 200
+
 
 def logout():
     session.clear()
-    return jsonify({'message': 'Logged out successfully'}), 200
+    return jsonify({"message": "Logged out successfully"}), 200
 
 
 def get_current_user():
@@ -51,9 +56,6 @@ def get_current_user():
 
     user = db_session.query(User).filter_by(id=user_id).first()
     if user:
-        return jsonify({
-            "id": user_id,
-            "username": user.username
-        })
+        return jsonify({"id": user_id, "username": user.username})
     else:
         return jsonify({"id": None, "username": None})
