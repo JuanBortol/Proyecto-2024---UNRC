@@ -9,16 +9,26 @@ from werkzeug.utils import secure_filename
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from Bio.PDB import PDBParser
-import os  
-
+import os
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
 app.secret_key = secrets.token_hex(16) 
 
 
-default_model_filename = 'backend/mi_modelo.h5'
-default_model_filepath = './backend/mi_modelo.h5'
+default_model_filename = 'mi_modelo.h5'
+default_model_filepath = './mi_modelo.h5'
+
+# Set the upload folder
+UPLOAD_FOLDER = "Proyecto2024/backend/uploads"
+REPORT_FOLDER = os.path.join(UPLOAD_FOLDER, "reports")
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['REPORT_FOLDER'] = REPORT_FOLDER
+
+# Create the folder if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 def submit_model():
     if 'user_id' not in session:
