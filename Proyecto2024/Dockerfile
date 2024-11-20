@@ -16,6 +16,9 @@ RUN pip install -r requirements.txt
 # Copy the backend files into the container
 COPY backend ./backend
 
+# Copy the frontend files into the container
+COPY frontend ./frontend
+
 # Navigate to the frontend directory
 WORKDIR /app/frontend
 
