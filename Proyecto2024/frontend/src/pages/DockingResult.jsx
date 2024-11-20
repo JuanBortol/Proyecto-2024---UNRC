@@ -12,7 +12,6 @@ export default function DockingResult() {
   const navigate = useNavigate();
   const location = useLocation();
   const results = location.state?.results;
-  const PREDICT_SERVICE_URL = import.meta.env.VITE_PREDICT_SERVICE_URL;
 
   // State for model selection
   const [selectedModel, setSelectedModel] = useState("default"); // "default" or "custom"
@@ -67,7 +66,7 @@ export default function DockingResult() {
     formData.append('toxin_filepath', results.toxin_filepath)
 
     try {
-      const response = await httpClient.post(`${PREDICT_SERVICE_URL}/submit_model`, formData, {
+      const response = await httpClient.post('/submit_model', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

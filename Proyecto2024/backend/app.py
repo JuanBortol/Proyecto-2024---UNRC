@@ -5,16 +5,16 @@ from database import db_session, Base, engine  # Importar db_session y Base desd
 from models.user import User
 from models.report import Report
 from models.prediction import Prediction
+from routes.predict import predict_bp
 from datetime import datetime
 import secrets
 from sqlalchemy.exc import SQLAlchemyError
 import os
 
 
-predict_service_url = os.getenv('VITE_PREDICT_SERVICE_URL', 'http://localhost:5000')
-
 app = Flask(__name__, static_folder='../frontend/dist', static_url_path='/')
-CORS(app, resources={r"/*": {"origins": predict_service_url}}, supports_credentials=True) # Para fixear lo de error por puertos distintos
+CORS(app, supports_credentials=True) # Para fixear lo de error por puertos distintos
+app.register_blueprint(predict_bp)
 app.secret_key = secrets.token_hex(16)  # Necesario para usar flash messages
 
 # Crear las tablas si no existen

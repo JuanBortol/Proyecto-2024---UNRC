@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from gradio_client import Client, handle_file
@@ -6,21 +6,19 @@ from tensorflow.keras import layers, models
 from Bio.PDB import PDBParser
 import numpy as np
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-import secrets
 import os
 import numpy as np
 import tensorflow as tf
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": os.getenv('API_URL')}},supports_credentials=True)
+predict_bp = Blueprint('predict' ,__name__)
+CORS(predict_bp, supports_credentials=True)
 
-@app.route('/upload', methods=['POST'])
+@predict_bp.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
-    file_type = request.form.get('type')  # 'protein' or 'toxin'
 
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
@@ -31,7 +29,7 @@ def upload_file():
         # Store filename in session
         return jsonify({'message': 'File uploaded successfully', 'filename': filename}), 200
 
-@app.route('/submit', methods=['POST'])
+@predict_bp.route('/submit', methods=['POST'])
 def submit_files():
     if 'protein_file' not in request.files or 'toxin_file' not in request.files:
         return jsonify({'error': 'Both protein and toxin files are required'}), 400
@@ -71,7 +69,7 @@ def submit_files():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/submit_model', methods=['POST'])
+@predict_bp.route('/submit_model', methods=['POST'])
 def submit_model():
     try:
         # Retrieve the model file, protein path, and toxin path from the request
@@ -221,6 +219,3 @@ def run_predict_degradation(protein_filepath, model_file):
     prediction_score = predict_protein(protein_filepath, model)
 
     return prediction_score
-
-if __name__=="__main__":
-    app.run(debug=True,host="0.0.0.0",port=5000)
