@@ -63,7 +63,6 @@ export default function DockingResult() {
       formData.append('model_file', fileInputModelRef.current.files[0]);
     }
 
-    formData.append('prediction_id', results.createPrediction.prediction_id);
     formData.append('protein_filepath', results.protein_filepath)
     formData.append('toxin_filepath', results.toxin_filepath)
 
@@ -80,6 +79,7 @@ export default function DockingResult() {
   
         const updatePredictionResponse = await httpClient.put('/predictions',
           {
+            prediction_id: results.createPrediction.prediction_id,
             degradation_result,
             degradation_score
           }

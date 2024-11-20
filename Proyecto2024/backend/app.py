@@ -236,7 +236,7 @@ def create_prediction():
 
 
 @app.route('/predictions', methods=['PUT'])
-def update_prediction(prediction_id):
+def update_prediction():
     """
     Updates an existing prediction with degradation results after the /submit_model endpoint is invoked.
     """
@@ -244,13 +244,14 @@ def update_prediction(prediction_id):
     if not user_id:
         return jsonify({'error': 'User not logged in'}), 401
 
-    prediction = db_session.query(Prediction).filter_by(id=prediction_id, user_id=user_id).first()
-    if not prediction:
-        return jsonify({'error': 'Prediction not found'}), 404
-
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
+    
+    prediction_id = data.get('prediction_id')
+    prediction = db_session.query(Prediction).filter_by(id=prediction_id, user_id=user_id).first()
+    if not prediction:
+        return jsonify({'error': 'Prediction not found'}), 404
 
     try:
         prediction.degradation_result = data.get('degradation_result')
