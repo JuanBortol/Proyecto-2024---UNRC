@@ -1,7 +1,7 @@
 import unittest
 
 from flask import Flask
-from app import app  # Cambia 'your_app' por el nombre real de tu archivo de aplicación
+from app import app
 
 
 class LoginTestCase(unittest.TestCase):
@@ -11,13 +11,13 @@ class LoginTestCase(unittest.TestCase):
 
     def test_login_success(self):
         response = self.app.post(
-            "/login", data={"username": "testuser", "password": "testpass"}
+            "/login", json={"username": "testuser", "password": "password"}
         )
         self.assertEqual(response.status_code, 200)
 
     def test_login_failure(self):
         response = self.app.post(
-            "/login", data={"username": "wronguser", "password": "wrongpass"}
+            "/login", json={"username": "wronguser", "password": "wrongpass"}
         )
         self.assertNotEqual(response.status_code, 200)
 

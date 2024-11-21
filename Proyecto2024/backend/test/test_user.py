@@ -22,8 +22,8 @@ class TestUserModel(unittest.TestCase):
     def tearDownClass(cls):
         cls.session.close()
 
-    # Limpia las tablas de usuarios y reportes antes de cada prueba
     def setUp(self):
+        self.session.rollback()
         self.session.query(Report).delete()
         self.session.query(User).delete()
         self.session.commit()
@@ -39,7 +39,6 @@ class TestUserModel(unittest.TestCase):
         self.assertEqual(saved_user.username, "test_user")
         self.assertEqual(saved_user.password, "test_password")
 
-    # Test para verificar que los nombres de usuario son unicos
     def test_unique_username(self):
         user1 = User(username="unique_user", password="password1")
         user2 = User(username="unique_user", password="password2")
@@ -49,34 +48,37 @@ class TestUserModel(unittest.TestCase):
 
         self.session.add(user2)
         with self.assertRaises(Exception):
-            self.session.commit()  # Tendria tirar un error de integridad de la base de datos
+            try:
+                self.session.commit()  
+            finally:
+                self.session.rollback()  
 
-    def test_user_report_relationship(self):
-        user = User(username="report_user", password="password123")
-        self.session.add(user)
-        self.session.commit()
 
-        report1 = Report(title="First Report", user_id=user.id)
-        report2 = Report(title="Second Report", user_id=user.id)
-        self.session.add_all([report1, report2])
-        self.session.commit()
+def test_user_report_relationship(self):
+    # Crear usuario
+    user = User(username="report_user", password="password123")
+    self.session.add(user)
+    self.session.commit()
 
-        # Comprueba que los reportes estan asociados con el usuario correcto
-        saved_user = self.session.query(User).filter_by(username="report_user").first()
-        self.assertEqual(len(saved_user.reports), 2)
-        self.assertEqual(saved_user.reports[0].title, "First Report")
-        self.assertEqual(saved_user.reports[1].title, "Second Report")
+    # Crear reportes asociados al usuario
+    report1 = Report(protein="Protein A", toxin="Toxin X", reason="Test Reason 1", user_id=user.id)
+    report2 = Report(protein="Protein B", toxin="Toxin Y", reason="Test Reason 2", user_id=user.id)
+    self.session.add_all([report1, report2])
+    self.session.commit()
 
-        # Comprueba que cada reporte puede acceder a su usuario
-        saved_report1 = (
-            self.session.query(Report).filter_by(title="First Report").first()
-        )
-        self.assertEqual(saved_report1.user.username, "report_user")
+    # Verificar que los reportes están asociados al usuario correcto
+    saved_user = self.session.query(User).filter_by(username="report_user").first()
+    self.assertEqual(len(saved_user.reports), 2)
+    self.assertEqual(saved_user.reports[0].protein, "Protein A")
+    self.assertEqual(saved_user.reports[1].protein, "Protein B")
 
-        saved_report2 = (
-            self.session.query(Report).filter_by(title="Second Report").first()
-        )
-        self.assertEqual(saved_report2.user.username, "report_user")
+    # Verificar que cada reporte puede acceder a su usuario
+    saved_report1 = self.session.query(Report).filter_by(protein="Protein A").first()
+    self.assertEqual(saved_report1.user.username, "report_user")
+
+    saved_report2 = self.session.query(Report).filter_by(protein="Protein B").first()
+    self.assertEqual(saved_report2.user.username, "report_user")
+
 
 
 if __name__ == "__main__":
