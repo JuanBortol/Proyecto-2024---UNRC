@@ -122,20 +122,22 @@ export default function DockingResult() {
 
         {/* Docking Score Section */}
         <div className="w-full xl:px-8">
-          <div className="grid grid-cols-1 mx-12 gap-24 md:mx-24 lg:grid-cols-2 lg:mx-8 xl:mx-32">
-            <div className="bg-white p-2">
-              <div className='w-full h-72 bg-black flex justify-center items-center'>
-                <p className="text-white">
-                  {docking ? `Docking score: ${results.docking_score}` : "Placeholder"}
-                </p>
-              </div>
-            </div>
-            <div className="bg-white p-2">
-              <div className='w-full h-72 bg-black flex justify-center items-center'>
-                <p className="text-white">Placeholder</p>
-              </div>
+          <div className="flex w-full justify-center items-center pb-24">
+            <div className='max-w-3xl h-32 flex justify-center text-center items-center
+            px-24 bg-white bg-opacity-10 rounded-2xl'>
+              {docking && (
+                <>
+              <p className="text-2xl font-extralight text-center">
+                Docking score <br />
+                <strong className="font-bold">{results.docking_score}</strong>
+              </p>
+              </>
+              )
+              }
             </div>
           </div>
+
+          <hr className="border-t-1 border-white w-24 mx-auto" />
 
           {/* Model Selection */}
           {docking && (
