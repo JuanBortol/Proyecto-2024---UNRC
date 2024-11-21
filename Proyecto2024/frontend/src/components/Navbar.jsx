@@ -20,7 +20,7 @@ const Navbar = () => {
       <div className="container text-white mx-auto flex justify-between items-center p-2">
       <button className="text-white text-4xl font-bold bg-transparent border-none cursor-pointer focus:outline-none"
       onClick={handleHome}>
-        PROTEINA
+        PROTEINA UNKNOWN
       </button>
         
         {/* Desktop Menu */}

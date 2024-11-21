@@ -58,7 +58,7 @@ export default function NotLoggedIn() {
         </div>
       ) : (
         <div className="text-center flex-col space-y-8 flex items-center">
-          <h1 className="text-6xl font-bold text-white">PROTEINA</h1>
+          <h1 className="text-6xl font-bold text-white">PROTEINA UNKNOWN</h1>
           <hr className="border-t-1 border-white w-12 mx-auto" />
           <div className="buttons flex-col space-y-4 flex items-center w-24">
             <button

@@ -37,7 +37,7 @@ export default function DegradationResult() {
           )}
           <p className="text-4xl font-extralight text-center">
             la proteína ingresada <br />
-            <strong className="font-bold">{degrades ? 'puede ser degradada' : 'no puede ser degradada'}</strong>
+            <strong className="font-bold">{degrades ? 'es capaz de degradar la toxina' : 'no es capaz de degradar la toxina'}</strong>
               <br/>
               <br/>
               <strong>
