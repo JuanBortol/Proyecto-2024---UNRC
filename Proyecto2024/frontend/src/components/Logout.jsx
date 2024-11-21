@@ -11,7 +11,7 @@ export default function Logout() {
 
   useEffect(() => {
     if (isAuth) {
-      httpClient.post('http://localhost:5000/logout')
+      httpClient.post('/logout')
         .then(res => {
           localStorage.removeItem('username');
           setIsAuth(false);

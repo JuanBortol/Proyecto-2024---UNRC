@@ -13,7 +13,7 @@ export default function RegistrationForm() {
     e.preventDefault();
 
     try {
-      const response = await httpClient.post('http://localhost:5000/register', {
+      const response = await httpClient.post('/register', {
         username,
         password,
         confirm_password: confirmPassword,

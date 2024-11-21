@@ -1,5 +1,10 @@
 import axios from 'axios';
 
-export default axios.create({
-    withCredentials: true,
-})
+const apiUrl = import.meta.env.VITE_API_URL;
+
+const httpClient = axios.create({
+  baseURL: apiUrl,
+  withCredentials: true
+});
+
+export default httpClient;

@@ -35,7 +35,7 @@ export default function Report() {
     formData.append('reason', reason);
   
     try {
-      const response = await httpClient.post('http://localhost:5000/submit_report', formData, {
+      const response = await httpClient.post('/submit_report', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       

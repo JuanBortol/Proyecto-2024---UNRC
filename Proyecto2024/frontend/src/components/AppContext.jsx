@@ -9,7 +9,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     httpClient
-      .get('http://localhost:5000/@me')
+      .get('/@me')
       .then((res) => {
         setIsAuth(!!res.data.id); // Check if user auth
       })
